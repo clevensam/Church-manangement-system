@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import Layout from './components/Layout';
-import Dashboard from './components/Dashboard';
-import Expenses from './components/Expenses';
-import Offerings from './components/Offerings';
-import Donors from './components/Donors';
 import { FileText, Download } from 'lucide-react';
+import LoadingCross from './components/LoadingCross';
+import ErrorBoundary from './components/ErrorBoundary';
+
+// Lazy load components for performance optimization (Code Splitting)
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const Expenses = lazy(() => import('./components/Expenses'));
+const Offerings = lazy(() => import('./components/Offerings'));
+const Donors = lazy(() => import('./components/Donors'));
 
 const ReportsPlaceholder = () => (
   <div className="space-y-6">
@@ -65,14 +69,22 @@ function App() {
   };
 
   return (
-    <Layout 
-      activeTab={activeTab} 
-      onNavigate={setActiveTab}
-      searchTerm={dashboardSearch}
-      onSearch={setDashboardSearch}
-    >
-      {renderContent()}
-    </Layout>
+    <ErrorBoundary>
+        <Layout 
+          activeTab={activeTab} 
+          onNavigate={setActiveTab}
+          searchTerm={dashboardSearch}
+          onSearch={setDashboardSearch}
+        >
+          <Suspense fallback={
+              <div className="h-[60vh] flex items-center justify-center">
+                  <LoadingCross />
+              </div>
+          }>
+            {renderContent()}
+          </Suspense>
+        </Layout>
+    </ErrorBoundary>
   );
 }
 

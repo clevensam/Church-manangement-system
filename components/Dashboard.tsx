@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/supabaseService';
 import { Expense, RegularOffering, EnvelopeOffering } from '../types';
+import LoadingCross from './LoadingCross';
 
 type TimeRange = '7d' | '1m' | '3m' | '6m' | 'all';
 
@@ -170,8 +171,8 @@ const Dashboard: React.FC<DashboardProps> = ({ searchTerm = '' }) => {
 
 
   if (loading) return (
-    <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+    <div className="flex items-center justify-center h-screen bg-slate-50">
+        <LoadingCross />
     </div>
   );
 

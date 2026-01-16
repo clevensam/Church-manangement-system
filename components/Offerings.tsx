@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/supabaseService';
 import { RegularOffering, EnvelopeOffering, ServiceType, Donor } from '../types';
 import { Plus, Wallet, Save, Search, X, Edit2, Trash2, AlertTriangle, Filter, Calendar, Users, CheckCircle2 } from 'lucide-react';
+import LoadingCross from './LoadingCross';
 
 interface OfferingsProps {
     viewMode?: 'list' | 'add';
@@ -379,7 +380,7 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
           {activeTab === 'regular' ? (
               <>
                 <div className="lg:hidden space-y-3">
-                    {loading ? <div className="p-4 text-center">Inapakia...</div> : filteredRegular.map(item => (
+                    {loading ? <div className="p-4"><LoadingCross /></div> : filteredRegular.map(item => (
                         <div key={item.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center">
                             <div>
                                 <span className="inline-block px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-xs font-bold mb-1">{item.service_type}</span>
@@ -403,7 +404,10 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
                             <tr><th className="px-6 py-4">Tarehe</th><th className="px-6 py-4">Aina</th><th className="px-6 py-4 text-right">Kiasi</th><th className="px-6 py-4 text-center">Matendo</th></tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {filteredRegular.map((item) => (
+                            {loading ? (
+                              <tr><td colSpan={4} className="px-6 py-8 text-center"><LoadingCross /></td></tr>
+                            ) : (
+                                filteredRegular.map((item) => (
                                 <tr key={item.id} className="hover:bg-slate-50">
                                     <td className="px-6 py-4">{new Date(item.service_date).toLocaleDateString()}</td>
                                     <td className="px-6 py-4"><span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold">{item.service_type}</span></td>
@@ -413,7 +417,8 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
                                         <button onClick={() => confirmDelete(item.id, 'regular')} className="p-2 text-slate-400 hover:text-rose-600 rounded-full hover:bg-rose-50"><Trash2 className="w-4 h-4" /></button>
                                     </td>
                                 </tr>
-                            ))}
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -421,7 +426,7 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
           ) : (
               <>
                  <div className="lg:hidden space-y-3">
-                    {loading ? <div className="p-4 text-center">Inapakia...</div> : filteredEnv.map(item => (
+                    {loading ? <div className="p-4"><LoadingCross /></div> : filteredEnv.map(item => (
                         <div key={item.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-start">
                             <div>
                                 <div className="flex items-center gap-2 mb-1">
@@ -448,7 +453,10 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
                             <tr><th className="px-6 py-4">Tarehe</th><th className="px-6 py-4">Bahasha</th><th className="px-6 py-4">Jina</th><th className="px-6 py-4 text-right">Kiasi</th><th className="px-6 py-4 text-center">Matendo</th></tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {filteredEnv.map((item) => (
+                            {loading ? (
+                              <tr><td colSpan={5} className="px-6 py-8 text-center"><LoadingCross /></td></tr>
+                            ) : (
+                                filteredEnv.map((item) => (
                                 <tr key={item.id} className="hover:bg-slate-50">
                                     <td className="px-6 py-4">{new Date(item.offering_date).toLocaleDateString()}</td>
                                     <td className="px-6 py-4 font-bold">#{item.envelope_number}</td>
@@ -459,7 +467,8 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
                                         <button onClick={() => confirmDelete(item.id, 'envelope')} className="p-2 text-slate-400 hover:text-rose-600 rounded-full hover:bg-rose-50"><Trash2 className="w-4 h-4" /></button>
                                     </td>
                                 </tr>
-                            ))}
+                                ))
+                            )}
                         </tbody>
                     </table>
                  </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/supabaseService';
 import { Donor, Fellowship } from '../types';
 import { UserPlus, Search, X, Users, Save, CheckCircle2 } from 'lucide-react';
+import LoadingCross from './LoadingCross';
 
 interface DonorsProps {
     viewMode?: 'list' | 'add';
@@ -184,7 +185,9 @@ const Donors: React.FC<DonorsProps> = ({ viewMode = 'list' }) => {
       {/* Donors Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
         {loading ? (
-            <div className="col-span-full text-center py-10 text-slate-500">Inapakia...</div>
+            <div className="col-span-full py-10">
+                <LoadingCross />
+            </div>
         ) : filteredDonors.length === 0 ? (
             <div className="col-span-full text-center py-10 text-slate-500 bg-white rounded-xl border border-dashed border-slate-300">
                 Hakuna wahumini waliopatikana.

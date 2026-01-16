@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/supabaseService';
 import { Expense } from '../types';
 import { Plus, Trash2, Edit2, Calendar, Save, X, Search, AlertTriangle, Filter, CheckCircle2, ArrowLeft } from 'lucide-react';
+import LoadingCross from './LoadingCross';
 
 interface ExpensesProps {
     viewMode?: 'list' | 'add';
@@ -270,7 +271,7 @@ const Expenses: React.FC<ExpensesProps> = ({ viewMode = 'list' }) => {
           
           {/* Mobile: Card View */}
           <div className="lg:hidden space-y-3">
-             {loading ? <div className="text-center p-8">Inapakia...</div> : filteredExpenses.length === 0 ? <div className="text-center p-8 text-slate-400">Hakuna matumizi.</div> : (
+             {loading ? <LoadingCross /> : filteredExpenses.length === 0 ? <div className="text-center p-8 text-slate-400">Hakuna matumizi.</div> : (
                  filteredExpenses.map((item) => (
                      <div key={item.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center">
                          <div>
@@ -305,7 +306,7 @@ const Expenses: React.FC<ExpensesProps> = ({ viewMode = 'list' }) => {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {loading ? (
-                  <tr><td colSpan={4} className="px-6 py-8 text-center">Inapakia...</td></tr>
+                  <tr><td colSpan={4} className="px-6 py-8 text-center"><LoadingCross /></td></tr>
                 ) : filteredExpenses.length === 0 ? (
                   <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400">Hakuna matumizi yaliyopatikana.</td></tr>
                 ) : (
