@@ -1,0 +1,5 @@
+{
+  "name": "Church Financial Management System",
+  "description": "A comprehensive web application for managing church finances, including expenses, regular offerings, envelope donations, and donor management. Features interactive dashboards and reporting tools.",
+  "requestFramePermissions": []
+}
