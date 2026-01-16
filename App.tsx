@@ -1,4 +1,5 @@
 import React, { useState, Suspense, lazy } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import Layout from './components/Layout';
 import { FileText, Download } from 'lucide-react';
 import LoadingCross from './components/LoadingCross';
@@ -84,6 +85,7 @@ function App() {
             {renderContent()}
           </Suspense>
         </Layout>
+        <Analytics />
     </ErrorBoundary>
   );
 }
