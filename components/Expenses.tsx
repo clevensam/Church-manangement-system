@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/supabaseService';
 import { Expense } from '../types';
-import { Plus, Trash2, Edit2, Calendar, Save, X, Search, AlertTriangle, Filter, CheckCircle2, ArrowLeft, Lock } from 'lucide-react';
+import { Plus, Trash2, Edit2, Calendar, Save, X, Search, AlertTriangle, Filter, CheckCircle2, Lock } from 'lucide-react';
 import LoadingCross from './LoadingCross';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -312,14 +312,14 @@ const Expenses: React.FC<ExpensesProps> = ({ viewMode = 'list' }) => {
                   <th className="px-6 py-4">Tarehe</th>
                   <th className="px-6 py-4">Maelezo</th>
                   <th className="px-6 py-4 text-right">Kiasi (TZS)</th>
-                  <th className="px-6 py-4 text-center">Matendo</th>
+                  {canManage && <th className="px-6 py-4 text-center">Matendo</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {loading ? (
-                  <tr><td colSpan={4} className="px-6 py-8 text-center"><LoadingCross /></td></tr>
+                  <tr><td colSpan={canManage ? 4 : 3} className="px-6 py-8 text-center"><LoadingCross /></td></tr>
                 ) : filteredExpenses.length === 0 ? (
-                  <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400">Hakuna matumizi yaliyopatikana.</td></tr>
+                  <tr><td colSpan={canManage ? 4 : 3} className="px-6 py-8 text-center text-slate-400">Hakuna matumizi yaliyopatikana.</td></tr>
                 ) : (
                   filteredExpenses.map((expense) => (
                     <tr key={expense.id} className="hover:bg-slate-50 transition-colors">
@@ -329,20 +329,16 @@ const Expenses: React.FC<ExpensesProps> = ({ viewMode = 'list' }) => {
                       </td>
                       <td className="px-6 py-4 font-medium text-slate-900">{expense.description}</td>
                       <td className="px-6 py-4 text-right font-mono text-rose-600 font-medium">-{expense.amount.toLocaleString()}</td>
-                      <td className="px-6 py-4 flex justify-center space-x-2">
-                        {canManage ? (
-                            <>
-                                <button onClick={() => handleOpenModal(expense)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50" title="Hariri">
-                                <Edit2 className="w-4 h-4" />
-                                </button>
-                                <button onClick={() => confirmDelete(expense)} className="p-2 text-slate-400 hover:text-rose-600 rounded-full hover:bg-rose-50" title="Futa">
-                                <Trash2 className="w-4 h-4" />
-                                </button>
-                            </>
-                        ) : (
-                            <span className="text-slate-300"><Lock className="w-4 h-4" /></span>
-                        )}
-                      </td>
+                      {canManage && (
+                          <td className="px-6 py-4 flex justify-center space-x-2">
+                            <button onClick={() => handleOpenModal(expense)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50" title="Hariri">
+                            <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => confirmDelete(expense)} className="p-2 text-slate-400 hover:text-rose-600 rounded-full hover:bg-rose-50" title="Futa">
+                            <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                      )}
                     </tr>
                   ))
                 )}

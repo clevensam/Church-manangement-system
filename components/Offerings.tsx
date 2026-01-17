@@ -430,27 +430,28 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
                 <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-left text-sm text-slate-600">
                         <thead className="bg-slate-50 border-b border-slate-200 font-medium text-slate-900">
-                            <tr><th className="px-6 py-4">Tarehe</th><th className="px-6 py-4">Aina</th><th className="px-6 py-4 text-right">Kiasi</th><th className="px-6 py-4 text-center">Matendo</th></tr>
+                            <tr>
+                                <th className="px-6 py-4">Tarehe</th>
+                                <th className="px-6 py-4">Aina</th>
+                                <th className="px-6 py-4 text-right">Kiasi</th>
+                                {canManageRegular && <th className="px-6 py-4 text-center">Matendo</th>}
+                            </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
-                              <tr><td colSpan={4} className="px-6 py-8 text-center"><LoadingCross /></td></tr>
+                              <tr><td colSpan={canManageRegular ? 4 : 3} className="px-6 py-8 text-center"><LoadingCross /></td></tr>
                             ) : (
                                 filteredRegular.map((item) => (
                                 <tr key={item.id} className="hover:bg-slate-50">
                                     <td className="px-6 py-4">{new Date(item.service_date).toLocaleDateString()}</td>
                                     <td className="px-6 py-4"><span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold">{item.service_type}</span></td>
                                     <td className="px-6 py-4 text-right font-mono">{item.amount.toLocaleString()}</td>
-                                    <td className="px-6 py-4 flex justify-center space-x-2">
-                                        {canManageRegular ? (
-                                            <>
-                                                <button onClick={() => handleOpenModal(item)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50"><Edit2 className="w-4 h-4" /></button>
-                                                <button onClick={() => confirmDelete(item.id, 'regular')} className="p-2 text-slate-400 hover:text-rose-600 rounded-full hover:bg-rose-50"><Trash2 className="w-4 h-4" /></button>
-                                            </>
-                                        ) : (
-                                            <span className="text-slate-300"><Lock className="w-4 h-4" /></span>
-                                        )}
-                                    </td>
+                                    {canManageRegular && (
+                                        <td className="px-6 py-4 flex justify-center space-x-2">
+                                            <button onClick={() => handleOpenModal(item)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50"><Edit2 className="w-4 h-4" /></button>
+                                            <button onClick={() => confirmDelete(item.id, 'regular')} className="p-2 text-slate-400 hover:text-rose-600 rounded-full hover:bg-rose-50"><Trash2 className="w-4 h-4" /></button>
+                                        </td>
+                                    )}
                                 </tr>
                                 ))
                             )}
@@ -487,11 +488,17 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
                  <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-left text-sm text-slate-600">
                         <thead className="bg-slate-50 border-b border-slate-200 font-medium text-slate-900">
-                            <tr><th className="px-6 py-4">Tarehe</th><th className="px-6 py-4">Bahasha</th><th className="px-6 py-4">Jina</th><th className="px-6 py-4 text-right">Kiasi</th><th className="px-6 py-4 text-center">Matendo</th></tr>
+                            <tr>
+                                <th className="px-6 py-4">Tarehe</th>
+                                <th className="px-6 py-4">Bahasha</th>
+                                <th className="px-6 py-4">Jina</th>
+                                <th className="px-6 py-4 text-right">Kiasi</th>
+                                {canManageEnvelope && <th className="px-6 py-4 text-center">Matendo</th>}
+                            </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
-                              <tr><td colSpan={5} className="px-6 py-8 text-center"><LoadingCross /></td></tr>
+                              <tr><td colSpan={canManageEnvelope ? 5 : 4} className="px-6 py-8 text-center"><LoadingCross /></td></tr>
                             ) : (
                                 filteredEnv.map((item) => (
                                 <tr key={item.id} className="hover:bg-slate-50">
@@ -499,16 +506,12 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
                                     <td className="px-6 py-4 font-bold">#{item.envelope_number}</td>
                                     <td className="px-6 py-4">{item.donor_name}</td>
                                     <td className="px-6 py-4 text-right font-mono">{item.amount.toLocaleString()}</td>
-                                    <td className="px-6 py-4 flex justify-center space-x-2">
-                                        {canManageEnvelope ? (
-                                            <>
-                                                <button onClick={() => handleOpenModal(item)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50"><Edit2 className="w-4 h-4" /></button>
-                                                <button onClick={() => confirmDelete(item.id, 'envelope')} className="p-2 text-slate-400 hover:text-rose-600 rounded-full hover:bg-rose-50"><Trash2 className="w-4 h-4" /></button>
-                                            </>
-                                        ) : (
-                                            <span className="text-slate-300"><Lock className="w-4 h-4" /></span>
-                                        )}
-                                    </td>
+                                    {canManageEnvelope && (
+                                        <td className="px-6 py-4 flex justify-center space-x-2">
+                                            <button onClick={() => handleOpenModal(item)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50"><Edit2 className="w-4 h-4" /></button>
+                                            <button onClick={() => confirmDelete(item.id, 'envelope')} className="p-2 text-slate-400 hover:text-rose-600 rounded-full hover:bg-rose-50"><Trash2 className="w-4 h-4" /></button>
+                                        </td>
+                                    )}
                                 </tr>
                                 ))
                             )}

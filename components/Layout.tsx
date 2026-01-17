@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext'; // Import useAuth
+import { useAuth } from '../contexts/AuthContext';
 import { 
   LayoutDashboard, 
   Wallet, 
@@ -11,16 +11,13 @@ import {
   LogOut,
   ChevronsLeft,
   ChevronsRight,
-  Menu,
   ChevronDown,
-  ChevronRight,
   List,
   PlusCircle,
   Bell,
   Settings,
   User,
-  HelpCircle,
-  ShieldCheck // Import Shield Icon
+  ShieldCheck 
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -36,30 +33,38 @@ interface NavItem {
   label: string;
   icon: any;
   subItems?: { id: string; label: string; icon: any }[];
-  adminOnly?: boolean; // New prop
+  allowedRoles?: string[]; // RBAC
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, searchTerm = '', onSearch }) => {
-  const { profile, signOut } = useAuth(); // Use auth context
+  const { profile, signOut } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-  const navItems: NavItem[] = [
-    { id: 'dashboard', label: 'Dashibodi', icon: LayoutDashboard },
+  // Define Navigation Structure with RBAC
+  const allNavItems: NavItem[] = [
+    { 
+        id: 'dashboard', 
+        label: 'Dashibodi', 
+        icon: LayoutDashboard,
+        allowedRoles: ['admin', 'pastor', 'accountant', 'jumuiya_leader']
+    },
     { 
       id: 'expenses', 
       label: 'Matumizi', 
       icon: CreditCard,
+      allowedRoles: ['admin', 'pastor', 'accountant', 'jumuiya_leader'],
       subItems: [
         { id: 'expenses-list', label: 'Orodha', icon: List },
-        { id: 'expenses-add', label: 'Rekodi Mpya', icon: PlusCircle },
+        { id: 'expenses-add', label: 'Rekodi Mpya', icon: PlusCircle }, // Permission checked inside Layout logic below
       ]
     },
     { 
       id: 'offerings', 
       label: 'Sadaka', 
       icon: Wallet,
+      allowedRoles: ['admin', 'pastor', 'accountant', 'jumuiya_leader'],
       subItems: [
         { id: 'offerings-list', label: 'Orodha', icon: List },
         { id: 'offerings-add', label: 'Rekodi Mpya', icon: PlusCircle },
@@ -69,15 +74,50 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
       id: 'donors', 
       label: 'Wahumini', 
       icon: Users,
+      allowedRoles: ['admin', 'pastor', 'accountant', 'jumuiya_leader'],
       subItems: [
         { id: 'donors-list', label: 'Orodha', icon: List },
         { id: 'donors-add', label: 'Sajili Mhumini', icon: PlusCircle },
       ]
     },
-    { id: 'reports', label: 'Ripoti', icon: FileText },
-    // Admin Only Link
-    { id: 'admin', label: 'Utawala', icon: ShieldCheck, adminOnly: true },
+    { 
+        id: 'reports', 
+        label: 'Ripoti', 
+        icon: FileText,
+        allowedRoles: ['admin', 'pastor', 'accountant', 'jumuiya_leader']
+    },
+    { 
+        id: 'admin', 
+        label: 'Utawala', 
+        icon: ShieldCheck, 
+        allowedRoles: ['admin'] 
+    },
   ];
+
+  // Specific Logic to hide "Add/Record" sub-items for read-only roles
+  const canAddExpenses = ['admin', 'accountant'].includes(profile?.role || '');
+  const canAddOfferings = ['admin', 'accountant', 'jumuiya_leader'].includes(profile?.role || '');
+  const canAddDonors = ['admin', 'jumuiya_leader'].includes(profile?.role || '');
+
+  const filteredNavItems = allNavItems.filter(item => {
+      // 1. Check parent role access
+      if (item.allowedRoles && !item.allowedRoles.includes(profile?.role || '')) {
+          return false;
+      }
+      return true;
+  }).map(item => {
+      // 2. Filter sub-items based on specific permissions
+      if (item.subItems) {
+          const filteredSub = item.subItems.filter(sub => {
+              if (sub.id === 'expenses-add' && !canAddExpenses) return false;
+              if (sub.id === 'offerings-add' && !canAddOfferings) return false;
+              if (sub.id === 'donors-add' && !canAddDonors) return false;
+              return true;
+          });
+          return { ...item, subItems: filteredSub.length > 0 ? filteredSub : undefined };
+      }
+      return item;
+  });
 
   const toggleSubMenu = (itemId: string) => {
     if (isCollapsed) setIsCollapsed(false);
@@ -87,12 +127,12 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
   };
 
   const getActiveParentId = () => {
-      const parent = navItems.find(item => item.id === activeTab || item.subItems?.some(sub => sub.id === activeTab));
+      const parent = filteredNavItems.find(item => item.id === activeTab || item.subItems?.some(sub => sub.id === activeTab));
       return parent?.id;
   };
 
   const activeParentId = getActiveParentId();
-  const activeItemLabel = navItems.flatMap(i => [i, ...(i.subItems || [])]).find(i => i.id === activeTab)?.label;
+  const activeItemLabel = filteredNavItems.flatMap(i => [i, ...(i.subItems || [])]).find(i => i.id === activeTab)?.label || 'Wasifu';
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900 pb-20 lg:pb-0">
@@ -128,10 +168,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
 
         {/* Navigation Items */}
         <nav className="flex-1 py-6 space-y-2 overflow-y-auto overflow-x-hidden px-4 custom-scrollbar">
-          {navItems.map((item) => {
-            // Check Admin Permission
-            if (item.adminOnly && profile?.role !== 'admin') return null;
-
+          {filteredNavItems.map((item) => {
             const Icon = item.icon;
             const isParentActive = activeParentId === item.id;
             const hasSubItems = !!item.subItems;
@@ -202,7 +239,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
           })}
         </nav>
         
-        {/* Footer (Simplified in Light Mode) */}
+        {/* Footer */}
         <div className="p-4 border-t border-slate-100 text-center">
             <span className={`text-[10px] text-slate-400 ${isCollapsed ? 'hidden' : 'block'}`}>
                 v1.0.0 &copy; 2024
@@ -214,10 +251,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
       {/* --- MOBILE BOTTOM NAVIGATION --- */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white/90 backdrop-blur-xl border-t border-slate-200 pb-safe-area shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
         <div className="flex justify-around items-center h-16 px-2">
-          {navItems.map((item) => {
-            // Check Admin Permission
-            if (item.adminOnly && profile?.role !== 'admin') return null;
-            
+          {filteredNavItems.map((item) => {
             const Icon = item.icon;
             const targetId = item.subItems ? item.subItems[0].id : item.id;
             const isActive = activeParentId === item.id;
@@ -269,7 +303,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
             </div>
 
             <div className="flex items-center gap-3 lg:gap-6">
-                {/* Search - Collapsed on mobile, expanded on desktop */}
+                {/* Search */}
                 {activeTab === 'dashboard' && (
                   <div className="relative group hidden sm:block">
                       <div className="flex items-center bg-slate-100/50 hover:bg-slate-100 group-focus-within:bg-white rounded-full px-4 py-2.5 border border-slate-200 group-focus-within:border-emerald-500/50 group-focus-within:ring-4 group-focus-within:ring-emerald-500/10 transition-all w-64">
@@ -320,8 +354,11 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
                                         <p className="font-bold text-slate-800">{profile?.full_name}</p>
                                         <p className="text-xs text-slate-500 uppercase">{profile?.role}</p>
                                     </div>
-                                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors">
-                                        <User className="w-4 h-4" /> Wasifu
+                                    <button 
+                                        onClick={() => { onNavigate('profile'); setShowProfileMenu(false); }}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors"
+                                    >
+                                        <User className="w-4 h-4" /> Wasifu Wangu
                                     </button>
                                     <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors">
                                         <Settings className="w-4 h-4" /> Mipangilio
