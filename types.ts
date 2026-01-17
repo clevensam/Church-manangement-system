@@ -1,5 +1,20 @@
 // Defined based on Section 7 of SDD and API Documentation
 
+export type UserRole = 'admin' | 'pastor' | 'accountant' | 'jumuiya_leader';
+
+export interface UserProfile {
+  id: string;
+  full_name: string;
+  role: UserRole;
+  must_change_password: boolean;
+}
+
+export interface AppUser extends UserProfile {
+    email: string;
+    last_sign_in_at?: string;
+    created_at: string;
+}
+
 export interface Expense {
   id: string;
   expense_date: string;

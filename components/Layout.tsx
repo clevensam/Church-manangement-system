@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext'; // Import useAuth
 import { 
   LayoutDashboard, 
   Wallet, 
@@ -18,7 +19,8 @@ import {
   Bell,
   Settings,
   User,
-  HelpCircle
+  HelpCircle,
+  ShieldCheck // Import Shield Icon
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -34,9 +36,11 @@ interface NavItem {
   label: string;
   icon: any;
   subItems?: { id: string; label: string; icon: any }[];
+  adminOnly?: boolean; // New prop
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, searchTerm = '', onSearch }) => {
+  const { profile, signOut } = useAuth(); // Use auth context
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -71,6 +75,8 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
       ]
     },
     { id: 'reports', label: 'Ripoti', icon: FileText },
+    // Admin Only Link
+    { id: 'admin', label: 'Utawala', icon: ShieldCheck, adminOnly: true },
   ];
 
   const toggleSubMenu = (itemId: string) => {
@@ -123,6 +129,9 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
         {/* Navigation Items */}
         <nav className="flex-1 py-6 space-y-2 overflow-y-auto overflow-x-hidden px-4 custom-scrollbar">
           {navItems.map((item) => {
+            // Check Admin Permission
+            if (item.adminOnly && profile?.role !== 'admin') return null;
+
             const Icon = item.icon;
             const isParentActive = activeParentId === item.id;
             const hasSubItems = !!item.subItems;
@@ -206,6 +215,9 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white/90 backdrop-blur-xl border-t border-slate-200 pb-safe-area shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
         <div className="flex justify-around items-center h-16 px-2">
           {navItems.map((item) => {
+            // Check Admin Permission
+            if (item.adminOnly && profile?.role !== 'admin') return null;
+            
             const Icon = item.icon;
             const targetId = item.subItems ? item.subItems[0].id : item.id;
             const isActive = activeParentId === item.id;
@@ -286,12 +298,12 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
                             onClick={() => setShowProfileMenu(!showProfileMenu)}
                             className="flex items-center gap-3 p-1.5 pr-3 rounded-full hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200 group"
                         >
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md ring-2 ring-white">
-                                AD
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md ring-2 ring-white uppercase">
+                                {profile?.full_name?.charAt(0) || 'U'}
                             </div>
                             <div className="hidden lg:flex flex-col items-start">
-                                <span className="text-sm font-bold text-slate-700 group-hover:text-slate-900 leading-none mb-1">Admin User</span>
-                                <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md leading-none">Msimamizi</span>
+                                <span className="text-sm font-bold text-slate-700 group-hover:text-slate-900 leading-none mb-1">{profile?.full_name || 'Mtumiaji'}</span>
+                                <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md leading-none uppercase">{profile?.role}</span>
                             </div>
                             <ChevronDown className="w-4 h-4 text-slate-400 hidden lg:block" />
                         </button>
@@ -305,8 +317,8 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
                                 />
                                 <div className="absolute right-0 top-14 w-56 bg-white rounded-xl shadow-2xl border border-slate-100 p-2 z-40 animate-in slide-in-from-top-2 duration-200">
                                     <div className="lg:hidden px-3 py-2 border-b border-slate-100 mb-2">
-                                        <p className="font-bold text-slate-800">Admin User</p>
-                                        <p className="text-xs text-slate-500">Msimamizi</p>
+                                        <p className="font-bold text-slate-800">{profile?.full_name}</p>
+                                        <p className="text-xs text-slate-500 uppercase">{profile?.role}</p>
                                     </div>
                                     <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors">
                                         <User className="w-4 h-4" /> Wasifu
@@ -315,7 +327,10 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
                                         <Settings className="w-4 h-4" /> Mipangilio
                                     </button>
                                     <div className="h-px bg-slate-100 my-1"></div>
-                                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                                    <button 
+                                      onClick={signOut}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                    >
                                         <LogOut className="w-4 h-4" /> Ondoka
                                     </button>
                                 </div>

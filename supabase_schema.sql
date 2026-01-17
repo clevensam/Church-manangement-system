@@ -1,6 +1,9 @@
 -- Enable UUID extension for unique identifiers
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- 0. Define Roles Enum
+CREATE TYPE public.user_role AS ENUM ('admin', 'pastor', 'accountant', 'jumuiya_leader');
+
 -- 1. Table: Fellowships (Jumuiya)
 CREATE TABLE public.fellowships (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -43,15 +46,106 @@ CREATE TABLE public.envelope_offerings (
     envelope_number TEXT NOT NULL REFERENCES public.donors(envelope_number) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
--- 6. Row Level Security
+-- 6. Table: Profiles (Linked to auth.users)
+CREATE TABLE public.profiles (
+    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    full_name TEXT,
+    role public.user_role DEFAULT 'jumuiya_leader',
+    must_change_password BOOLEAN DEFAULT TRUE
+);
+
+-- 7. Trigger to handle new user creation
+-- When an admin creates a user in Supabase Auth, this trigger automatically creates a profile
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, role, must_change_password)
+  VALUES (
+    new.id, 
+    new.raw_user_meta_data->>'full_name', 
+    COALESCE((new.raw_user_meta_data->>'role')::public.user_role, 'jumuiya_leader'),
+    TRUE
+  );
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+-- 8. Row Level Security
 ALTER TABLE public.fellowships ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.donors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.regular_offerings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.envelope_offerings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Enable all access for all users" ON public.fellowships FOR ALL USING (true);
-CREATE POLICY "Enable all access for all users" ON public.expenses FOR ALL USING (true);
-CREATE POLICY "Enable all access for all users" ON public.donors FOR ALL USING (true);
-CREATE POLICY "Enable all access for all users" ON public.regular_offerings FOR ALL USING (true);
-CREATE POLICY "Enable all access for all users" ON public.envelope_offerings FOR ALL USING (true);
+-- General Policies (Simplified for internal system: Authenticated users can read/write data)
+-- In a stricter system, you would restrict WRITE access based on the 'role' column in profiles.
+CREATE POLICY "Enable access for authenticated users" ON public.fellowships FOR ALL TO authenticated USING (true);
+CREATE POLICY "Enable access for authenticated users" ON public.expenses FOR ALL TO authenticated USING (true);
+CREATE POLICY "Enable access for authenticated users" ON public.donors FOR ALL TO authenticated USING (true);
+CREATE POLICY "Enable access for authenticated users" ON public.regular_offerings FOR ALL TO authenticated USING (true);
+CREATE POLICY "Enable access for authenticated users" ON public.envelope_offerings FOR ALL TO authenticated USING (true);
+
+-- Profiles Policies
+-- Users can read their own profile
+CREATE POLICY "Users can read own profile" ON public.profiles 
+    FOR SELECT TO authenticated 
+    USING (auth.uid() = id);
+
+-- Users can update their own profile (specifically for must_change_password)
+CREATE POLICY "Users can update own profile" ON public.profiles 
+    FOR UPDATE TO authenticated 
+    USING (auth.uid() = id);
+
+-- Admins can read all profiles
+CREATE POLICY "Admins can read all profiles" ON public.profiles 
+    FOR SELECT TO authenticated 
+    USING (
+      EXISTS (
+        SELECT 1 FROM public.profiles 
+        WHERE id = auth.uid() AND role = 'admin'
+      )
+    );
+
+-- 9. Admin Functions
+-- Secure function to get all users including emails (Requires Admin Role)
+CREATE OR REPLACE FUNCTION public.get_users_list()
+RETURNS TABLE (
+  id UUID,
+  email TEXT,
+  full_name TEXT,
+  role public.user_role,
+  must_change_password BOOLEAN,
+  last_sign_in_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE
+) 
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Check if the requesting user is an admin
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE id = auth.uid() AND role = 'admin'
+  ) THEN
+    RAISE EXCEPTION 'Access denied. Admins only.';
+  END IF;
+
+  RETURN QUERY
+  SELECT 
+    p.id,
+    u.email::TEXT,
+    p.full_name,
+    p.role,
+    p.must_change_password,
+    u.last_sign_in_at,
+    p.created_at
+  FROM public.profiles p
+  JOIN auth.users u ON p.id = u.id
+  ORDER BY p.created_at DESC;
+END;
+$$ LANGUAGE plpgsql;

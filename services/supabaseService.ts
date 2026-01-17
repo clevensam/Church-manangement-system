@@ -1,7 +1,67 @@
 import { supabase } from '../lib/supabaseClient';
-import { Expense, RegularOffering, Donor, EnvelopeOffering, Fellowship } from '../types';
+import { Expense, RegularOffering, Donor, EnvelopeOffering, Fellowship, UserProfile, AppUser } from '../types';
 
 export const api = {
+  // 0. Profiles & Auth API
+  profiles: {
+    getCurrent: async (userId: string): Promise<UserProfile | null> => {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+        
+        if (error) {
+            console.error('Error fetching profile:', error);
+            return null;
+        }
+        return data;
+    },
+    completePasswordReset: async (userId: string) => {
+        const { error } = await supabase
+            .from('profiles')
+            .update({ must_change_password: false })
+            .eq('id', userId);
+        
+        if (error) throw error;
+    }
+  },
+
+  // 0.1 Admin API
+  admin: {
+      getAllUsers: async (): Promise<AppUser[]> => {
+          const { data, error } = await supabase.rpc('get_users_list');
+          if (error) throw error;
+          return data || [];
+      },
+      createUser: async (userData: { email: string; full_name: string; role: string; password: string }) => {
+          // In a real production environment, this should call a Supabase Edge Function
+          // because 'supabase.auth.admin.createUser' is not available in the client.
+          // Example: 
+          // const { data, error } = await supabase.functions.invoke('create-user', { body: userData });
+          
+          // FOR DEMONSTRATION/INTERNAL TOOLS WITHOUT EDGE FUNCTIONS:
+          // We might simulate this or rely on the fact that we've been asked to "build the system".
+          // I will implement the client-side call to a Function.
+          
+          const { data, error } = await supabase.functions.invoke('create-user', {
+              body: userData
+          });
+
+          if (error) {
+             console.error("Function invoke error:", error);
+             throw new Error("Imeshindikana kuunda mtumiaji. Tafadhali hakikisha 'create-user' Edge Function ipo.");
+          }
+          return data;
+      },
+      deleteUser: async (userId: string) => {
+          const { error } = await supabase.functions.invoke('delete-user', {
+              body: { userId }
+          });
+          if (error) throw error;
+      }
+  },
+
   // 1. Fellowships API
   fellowships: {
     getAll: async (): Promise<Fellowship[]> => {
