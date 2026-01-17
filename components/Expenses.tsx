@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/supabaseService';
 import { Expense } from '../types';
-import { Plus, Trash2, Edit2, Calendar, Save, X, Search, AlertTriangle, Filter, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, Edit2, Calendar, Save, X, Search, AlertTriangle, Filter, CheckCircle2, ArrowLeft, Lock } from 'lucide-react';
 import LoadingCross from './LoadingCross';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ExpensesProps {
     viewMode?: 'list' | 'add';
 }
 
 const Expenses: React.FC<ExpensesProps> = ({ viewMode = 'list' }) => {
+  const { profile } = useAuth();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // Permissions
+  const canManage = profile?.role === 'accountant' || profile?.role === 'admin';
+
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -19,8 +24,6 @@ const Expenses: React.FC<ExpensesProps> = ({ viewMode = 'list' }) => {
   const [showFilters, setShowFilters] = useState(false); // Toggle for mobile
 
   // Form & Modal State
-  // Note: On desktop 'add' mode, isModalOpen is conceptually true but rendered inline.
-  // We use isModalOpen primarily for the mobile FAB interactions.
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<Expense>>({
@@ -59,6 +62,8 @@ const Expenses: React.FC<ExpensesProps> = ({ viewMode = 'list' }) => {
 
   // Called by FAB or Edit Button
   const handleOpenModal = (item?: Expense) => {
+      if (!canManage) return; // Prevent open if no permission
+
       setSuccessMsg(null);
       if (item) {
           setEditId(item.id);
@@ -88,6 +93,7 @@ const Expenses: React.FC<ExpensesProps> = ({ viewMode = 'list' }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canManage) return;
     if (!formData.description || !formData.amount || !formData.expense_date) return;
 
     try {
@@ -110,12 +116,13 @@ const Expenses: React.FC<ExpensesProps> = ({ viewMode = 'list' }) => {
   };
 
   const confirmDelete = (expense: Expense) => {
+    if (!canManage) return;
     setItemToDelete(expense);
     setShowDeleteModal(true);
   };
 
   const handleDelete = async () => {
-    if (itemToDelete) {
+    if (itemToDelete && canManage) {
       await api.expenses.delete(itemToDelete.id);
       setShowDeleteModal(false);
       setItemToDelete(null);
@@ -200,12 +207,14 @@ const Expenses: React.FC<ExpensesProps> = ({ viewMode = 'list' }) => {
 
   // --- VIEW MODE: ADD (Desktop) ---
   if (viewMode === 'add') {
+      if (!canManage) {
+          return <div className="p-8 text-center text-rose-500">Hauna ruhusa ya kurekodi matumizi.</div>;
+      }
       return (
           <div className="max-w-2xl mx-auto py-6">
               <div className="flex items-center justify-between mb-6">
                   <h1 className="text-2xl font-bold text-slate-900">Rekodi Matumizi</h1>
-                  {/* Since layout handles nav, we don't strictly need a back button if they use sidebar, but a shortcut is nice */}
-                  <a href="#" onClick={(e) => { e.preventDefault(); /* Ideally navigate via parent prop but simple link works if managed by layout */ }} className="hidden">Rejea Orodha</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); }} className="hidden">Rejea Orodha</a>
               </div>
               
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
@@ -283,10 +292,12 @@ const Expenses: React.FC<ExpensesProps> = ({ viewMode = 'list' }) => {
                          </div>
                          <div className="text-right">
                              <p className="font-mono font-bold text-rose-600">-{item.amount.toLocaleString()}</p>
-                             <div className="flex justify-end gap-3 mt-2">
-                                 <button onClick={() => handleOpenModal(item)} className="text-indigo-600"><Edit2 className="w-4 h-4" /></button>
-                                 <button onClick={() => confirmDelete(item)} className="text-rose-600"><Trash2 className="w-4 h-4" /></button>
-                             </div>
+                             {canManage && (
+                                <div className="flex justify-end gap-3 mt-2">
+                                    <button onClick={() => handleOpenModal(item)} className="text-indigo-600"><Edit2 className="w-4 h-4" /></button>
+                                    <button onClick={() => confirmDelete(item)} className="text-rose-600"><Trash2 className="w-4 h-4" /></button>
+                                </div>
+                             )}
                          </div>
                      </div>
                  ))
@@ -319,12 +330,18 @@ const Expenses: React.FC<ExpensesProps> = ({ viewMode = 'list' }) => {
                       <td className="px-6 py-4 font-medium text-slate-900">{expense.description}</td>
                       <td className="px-6 py-4 text-right font-mono text-rose-600 font-medium">-{expense.amount.toLocaleString()}</td>
                       <td className="px-6 py-4 flex justify-center space-x-2">
-                        <button onClick={() => handleOpenModal(expense)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50" title="Hariri">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => confirmDelete(expense)} className="p-2 text-slate-400 hover:text-rose-600 rounded-full hover:bg-rose-50" title="Futa">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {canManage ? (
+                            <>
+                                <button onClick={() => handleOpenModal(expense)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50" title="Hariri">
+                                <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button onClick={() => confirmDelete(expense)} className="p-2 text-slate-400 hover:text-rose-600 rounded-full hover:bg-rose-50" title="Futa">
+                                <Trash2 className="w-4 h-4" />
+                                </button>
+                            </>
+                        ) : (
+                            <span className="text-slate-300"><Lock className="w-4 h-4" /></span>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -334,16 +351,18 @@ const Expenses: React.FC<ExpensesProps> = ({ viewMode = 'list' }) => {
           </div>
       </div>
 
-      {/* Floating Action Button (FAB) for Mobile Only */}
-      <button 
-        onClick={() => handleOpenModal()}
-        className="lg:hidden fixed bottom-24 right-6 w-14 h-14 bg-rose-600 text-white rounded-full shadow-lg hover:bg-rose-700 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 z-40"
-      >
-          <Plus className="w-8 h-8" />
-      </button>
+      {/* Floating Action Button (FAB) for Mobile Only - Permission Check */}
+      {canManage && (
+          <button 
+            onClick={() => handleOpenModal()}
+            className="lg:hidden fixed bottom-24 right-6 w-14 h-14 bg-rose-600 text-white rounded-full shadow-lg hover:bg-rose-700 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 z-40"
+          >
+              <Plus className="w-8 h-8" />
+          </button>
+      )}
 
       {/* Add/Edit Modal (Used for Mobile Add, and Desktop Edit) */}
-      {isModalOpen && (
+      {isModalOpen && canManage && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
             <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 duration-200">
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -363,7 +382,7 @@ const Expenses: React.FC<ExpensesProps> = ({ viewMode = 'list' }) => {
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
+      {showDeleteModal && canManage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 animate-in zoom-in duration-200">
                 <div className="flex flex-col items-center text-center">

@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/supabaseService';
 import { RegularOffering, EnvelopeOffering, ServiceType, Donor } from '../types';
-import { Plus, Wallet, Save, Search, X, Edit2, Trash2, AlertTriangle, Filter, Calendar, Users, CheckCircle2 } from 'lucide-react';
+import { Plus, Wallet, Save, Search, X, Edit2, Trash2, AlertTriangle, Filter, Calendar, Users, CheckCircle2, Lock } from 'lucide-react';
 import LoadingCross from './LoadingCross';
+import { useAuth } from '../contexts/AuthContext';
 
 interface OfferingsProps {
     viewMode?: 'list' | 'add';
 }
 
 const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
+  const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState<'regular' | 'envelope'>('regular');
   const [regularOfferings, setRegularOfferings] = useState<RegularOffering[]>([]);
   const [envOfferings, setEnvOfferings] = useState<EnvelopeOffering[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // Permissions
+  const canManageRegular = profile?.role === 'accountant' || profile?.role === 'admin';
+  const canManageEnvelope = profile?.role === 'jumuiya_leader' || profile?.role === 'admin';
   
   // Data for Lookups
   const [allDonors, setAllDonors] = useState<Donor[]>([]);
@@ -80,6 +86,10 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
   };
 
   const handleOpenModal = (item?: any) => {
+      // Permission Check based on Active Tab
+      if (activeTab === 'regular' && !canManageRegular) return;
+      if (activeTab === 'envelope' && !canManageEnvelope) return;
+
       setErrorMsg(null);
       setSuccessMsg(null);
       setMatchedDonor(null);
@@ -127,6 +137,8 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
 
   const handleRegularSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canManageRegular) return;
+
     try {
       if (editId) {
           await api.offerings.update(editId, regularForm);
@@ -147,6 +159,7 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
 
   const handleEnvSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canManageEnvelope) return;
     setErrorMsg(null);
     try {
       if (editId) {
@@ -198,6 +211,9 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
   };
 
   const confirmDelete = (id: string, type: 'regular' | 'envelope') => {
+    if (type === 'regular' && !canManageRegular) return;
+    if (type === 'envelope' && !canManageEnvelope) return;
+
     setDeleteData({ id, type });
     setShowDeleteModal(true);
   };
@@ -315,23 +331,34 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
                 <div className="flex space-x-2 bg-slate-50 p-1 rounded-xl mb-6">
                     <button
                         onClick={() => setActiveTab('regular')}
+                        disabled={!canManageRegular}
                         className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-                        activeTab === 'regular' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        activeTab === 'regular' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed'
                         }`}
                     >
                         Ibada ya Kawaida
                     </button>
                     <button
                         onClick={() => setActiveTab('envelope')}
+                        disabled={!canManageEnvelope}
                         className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-                        activeTab === 'envelope' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        activeTab === 'envelope' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed'
                         }`}
                     >
                         Sadaka ya Bahasha
                     </button>
                 </div>
 
-                {activeTab === 'regular' ? renderRegularForm() : renderEnvForm()}
+                {activeTab === 'regular' && canManageRegular && renderRegularForm()}
+                {activeTab === 'envelope' && canManageEnvelope && renderEnvForm()}
+                
+                {/* Fallback permission message */}
+                {((activeTab === 'regular' && !canManageRegular) || (activeTab === 'envelope' && !canManageEnvelope)) && (
+                     <div className="text-center py-10 text-slate-400">
+                         <Lock className="w-10 h-10 mx-auto mb-2 text-slate-300" />
+                         <p>Hauna ruhusa ya kurekodi taarifa hii.</p>
+                     </div>
+                )}
             </div>
         </div>
     );
@@ -390,10 +417,12 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
                             </div>
                             <div className="text-right">
                                 <div className="font-mono font-bold text-slate-900">{item.amount.toLocaleString()}</div>
-                                <div className="flex justify-end gap-3 mt-1.5">
-                                    <button onClick={() => handleOpenModal(item)} className="text-slate-400 hover:text-indigo-600"><Edit2 className="w-4 h-4" /></button>
-                                    <button onClick={() => confirmDelete(item.id, 'regular')} className="text-slate-400 hover:text-rose-600"><Trash2 className="w-4 h-4" /></button>
-                                </div>
+                                {canManageRegular && (
+                                    <div className="flex justify-end gap-3 mt-1.5">
+                                        <button onClick={() => handleOpenModal(item)} className="text-slate-400 hover:text-indigo-600"><Edit2 className="w-4 h-4" /></button>
+                                        <button onClick={() => confirmDelete(item.id, 'regular')} className="text-slate-400 hover:text-rose-600"><Trash2 className="w-4 h-4" /></button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -413,8 +442,14 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
                                     <td className="px-6 py-4"><span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold">{item.service_type}</span></td>
                                     <td className="px-6 py-4 text-right font-mono">{item.amount.toLocaleString()}</td>
                                     <td className="px-6 py-4 flex justify-center space-x-2">
-                                        <button onClick={() => handleOpenModal(item)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50"><Edit2 className="w-4 h-4" /></button>
-                                        <button onClick={() => confirmDelete(item.id, 'regular')} className="p-2 text-slate-400 hover:text-rose-600 rounded-full hover:bg-rose-50"><Trash2 className="w-4 h-4" /></button>
+                                        {canManageRegular ? (
+                                            <>
+                                                <button onClick={() => handleOpenModal(item)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50"><Edit2 className="w-4 h-4" /></button>
+                                                <button onClick={() => confirmDelete(item.id, 'regular')} className="p-2 text-slate-400 hover:text-rose-600 rounded-full hover:bg-rose-50"><Trash2 className="w-4 h-4" /></button>
+                                            </>
+                                        ) : (
+                                            <span className="text-slate-300"><Lock className="w-4 h-4" /></span>
+                                        )}
                                     </td>
                                 </tr>
                                 ))
@@ -439,10 +474,12 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
                             </div>
                             <div className="text-right">
                                 <div className="font-mono font-bold text-slate-900">{item.amount.toLocaleString()}</div>
-                                <div className="flex justify-end gap-3 mt-1.5">
-                                    <button onClick={() => handleOpenModal(item)} className="text-slate-400 hover:text-indigo-600"><Edit2 className="w-4 h-4" /></button>
-                                    <button onClick={() => confirmDelete(item.id, 'envelope')} className="text-slate-400 hover:text-rose-600"><Trash2 className="w-4 h-4" /></button>
-                                </div>
+                                {canManageEnvelope && (
+                                    <div className="flex justify-end gap-3 mt-1.5">
+                                        <button onClick={() => handleOpenModal(item)} className="text-slate-400 hover:text-indigo-600"><Edit2 className="w-4 h-4" /></button>
+                                        <button onClick={() => confirmDelete(item.id, 'envelope')} className="text-slate-400 hover:text-rose-600"><Trash2 className="w-4 h-4" /></button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -463,8 +500,14 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
                                     <td className="px-6 py-4">{item.donor_name}</td>
                                     <td className="px-6 py-4 text-right font-mono">{item.amount.toLocaleString()}</td>
                                     <td className="px-6 py-4 flex justify-center space-x-2">
-                                        <button onClick={() => handleOpenModal(item)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50"><Edit2 className="w-4 h-4" /></button>
-                                        <button onClick={() => confirmDelete(item.id, 'envelope')} className="p-2 text-slate-400 hover:text-rose-600 rounded-full hover:bg-rose-50"><Trash2 className="w-4 h-4" /></button>
+                                        {canManageEnvelope ? (
+                                            <>
+                                                <button onClick={() => handleOpenModal(item)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50"><Edit2 className="w-4 h-4" /></button>
+                                                <button onClick={() => confirmDelete(item.id, 'envelope')} className="p-2 text-slate-400 hover:text-rose-600 rounded-full hover:bg-rose-50"><Trash2 className="w-4 h-4" /></button>
+                                            </>
+                                        ) : (
+                                            <span className="text-slate-300"><Lock className="w-4 h-4" /></span>
+                                        )}
                                     </td>
                                 </tr>
                                 ))
@@ -476,10 +519,12 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
           )}
       </div>
 
-      {/* FAB (Mobile Only) */}
-      <button onClick={() => handleOpenModal()} className="lg:hidden fixed bottom-24 right-6 w-14 h-14 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 z-40">
-          <Plus className="w-8 h-8" />
-      </button>
+      {/* FAB (Mobile Only) - Condition based on Tab */}
+      {((activeTab === 'regular' && canManageRegular) || (activeTab === 'envelope' && canManageEnvelope)) && (
+          <button onClick={() => handleOpenModal()} className="lg:hidden fixed bottom-24 right-6 w-14 h-14 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 z-40">
+              <Plus className="w-8 h-8" />
+          </button>
+      )}
 
       {/* Modal Form (Mobile Add, Desktop Edit) */}
       {isModalOpen && (

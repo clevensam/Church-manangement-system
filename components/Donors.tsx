@@ -3,17 +3,22 @@ import { api } from '../services/supabaseService';
 import { Donor, Fellowship } from '../types';
 import { UserPlus, Search, X, Users, Save, CheckCircle2 } from 'lucide-react';
 import LoadingCross from './LoadingCross';
+import { useAuth } from '../contexts/AuthContext';
 
 interface DonorsProps {
     viewMode?: 'list' | 'add';
 }
 
 const Donors: React.FC<DonorsProps> = ({ viewMode = 'list' }) => {
+  const { profile } = useAuth();
   const [donors, setDonors] = useState<Donor[]>([]);
   const [fellowships, setFellowships] = useState<Fellowship[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   
+  // Permissions: "Viongozi can add users only" (interpreted as Donors)
+  const canManage = profile?.role === 'jumuiya_leader' || profile?.role === 'admin';
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState<Donor>({
     envelope_number: '',
@@ -58,12 +63,15 @@ const Donors: React.FC<DonorsProps> = ({ viewMode = 'list' }) => {
   };
 
   const handleOpenModal = () => {
+      if (!canManage) return;
       resetForm();
       setIsModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canManage) return;
+
     setError(null);
     if(!form.fellowship_id) {
         setError("Tafadhali chagua Jumuiya.");
@@ -142,6 +150,9 @@ const Donors: React.FC<DonorsProps> = ({ viewMode = 'list' }) => {
 
   // --- VIEW MODE: ADD (Desktop) ---
   if (viewMode === 'add') {
+    if (!canManage) {
+        return <div className="p-8 text-center text-rose-500">Hauna ruhusa ya kusajili wahumini.</div>;
+    }
     return (
         <div className="max-w-2xl mx-auto py-6">
             <div className="flex items-center justify-between mb-6">
@@ -210,15 +221,17 @@ const Donors: React.FC<DonorsProps> = ({ viewMode = 'list' }) => {
       </div>
 
       {/* FAB (Mobile Only) */}
-      <button 
-        onClick={handleOpenModal}
-        className="lg:hidden fixed bottom-24 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 z-40"
-      >
-          <UserPlus className="w-7 h-7" />
-      </button>
+      {canManage && (
+          <button 
+            onClick={handleOpenModal}
+            className="lg:hidden fixed bottom-24 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 z-40"
+          >
+              <UserPlus className="w-7 h-7" />
+          </button>
+      )}
 
       {/* Modal Form (Mobile Only) */}
-      {isModalOpen && (
+      {isModalOpen && canManage && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
             <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 duration-200">
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
