@@ -1,3 +1,44 @@
+-- 0. SEED USERS (Requires pgcrypto extension enabled in schema)
+-- We insert directly into auth.users. The trigger 'on_auth_user_created' will automatically populate public.profiles.
+
+DO $$
+DECLARE
+  admin_id uuid := 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a01';
+  accountant_id uuid := 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a02';
+  leader_id uuid := 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a03';
+  pastor_id uuid := 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a04';
+BEGIN
+  -- 1. Create Admin User (admin@kanisa.or.tz / admin123)
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'admin@kanisa.or.tz') THEN
+    INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+    VALUES (admin_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin@kanisa.or.tz', crypt('admin123', gen_salt('bf')), now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "System Admin", "role": "admin"}', now(), now());
+  END IF;
+
+  -- 2. Create Accountant User (mhasibu@kanisa.or.tz / admin123)
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'mhasibu@kanisa.or.tz') THEN
+    INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+    VALUES (accountant_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'mhasibu@kanisa.or.tz', crypt('admin123', gen_salt('bf')), now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Mhasibu Mkuu", "role": "accountant"}', now(), now());
+  END IF;
+
+  -- 3. Create Jumuiya Leader (kiongozi@kanisa.or.tz / admin123)
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'kiongozi@kanisa.or.tz') THEN
+    INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+    VALUES (leader_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'kiongozi@kanisa.or.tz', crypt('admin123', gen_salt('bf')), now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Kiongozi Jumuiya", "role": "jumuiya_leader"}', now(), now());
+  END IF;
+
+  -- 4. Create Pastor (mchungaji@kanisa.or.tz / admin123)
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'mchungaji@kanisa.or.tz') THEN
+    INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+    VALUES (pastor_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'mchungaji@kanisa.or.tz', crypt('admin123', gen_salt('bf')), now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Mchungaji Kiongozi", "role": "pastor"}', now(), now());
+  END IF;
+
+  -- 5. Bypass "Change Password" requirement for these test users
+  UPDATE public.profiles 
+  SET must_change_password = FALSE 
+  WHERE id IN (admin_id, accountant_id, leader_id, pastor_id);
+
+END $$;
+
 -- 1. SEED FELLOWSHIPS (Jumuiya)
 -- Using hardcoded UUIDs here for the seed script to allow referencing in donors insert.
 -- In a real app, you would let the DB generate them.
@@ -9,7 +50,8 @@ INSERT INTO public.fellowships (id, name) VALUES
 ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14', 'Kaanani'),
 ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15', 'Sayuni'),
 ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16', 'Betania'),
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17', 'Galilaya');
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17', 'Galilaya')
+ON CONFLICT DO NOTHING;
 
 -- 2. SEED DONORS (Wahumini)
 -- Mapping to the Fellowship IDs created above
@@ -43,7 +85,8 @@ INSERT INTO public.donors (envelope_number, donor_name, fellowship_id) VALUES
 ('127', 'George Sumari', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14'),
 ('128', 'Happy Kwayu', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15'),
 ('129', 'Charles Lema', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16'),
-('130', 'Faith Nnko', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17');
+('130', 'Faith Nnko', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17')
+ON CONFLICT DO NOTHING;
 
 -- 3. SEED REGULAR OFFERINGS
 INSERT INTO public.regular_offerings (service_date, service_type, amount) VALUES
@@ -76,7 +119,8 @@ INSERT INTO public.regular_offerings (service_date, service_type, amount) VALUES
 ('2024-04-07', 'Ibada ya Kwanza', 315000.00),
 ('2024-04-07', 'Ibada ya Pili', 410000.00),
 ('2024-04-14', 'Ibada ya Kwanza', 345000.00),
-('2024-04-14', 'Ibada ya Pili', 420000.00);
+('2024-04-14', 'Ibada ya Pili', 420000.00)
+ON CONFLICT DO NOTHING;
 
 -- 4. SEED EXPENSES
 INSERT INTO public.expenses (expense_date, description, amount) VALUES
@@ -109,7 +153,8 @@ INSERT INTO public.expenses (expense_date, description, amount) VALUES
 ('2024-04-10', 'Malipo ya Mlinzi', 120000.00),
 ('2024-04-12', 'Mafuta ya Generator', 38000.00),
 ('2024-04-15', 'Matengenezo ya Taa', 25000.00),
-('2024-04-16', 'Chakula cha Viongozi', 45000.00);
+('2024-04-16', 'Chakula cha Viongozi', 45000.00)
+ON CONFLICT DO NOTHING;
 
 -- 5. SEED ENVELOPE OFFERINGS
 INSERT INTO public.envelope_offerings (offering_date, envelope_number, amount) VALUES
@@ -142,4 +187,5 @@ INSERT INTO public.envelope_offerings (offering_date, envelope_number, amount) V
 ('2024-03-03', '128', 10000.00),
 ('2024-03-10', '121', 15000.00),
 ('2024-03-10', '126', 8000.00),
-('2024-03-10', '129', 50000.00);
+('2024-03-10', '129', 50000.00)
+ON CONFLICT DO NOTHING;

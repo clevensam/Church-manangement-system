@@ -8,8 +8,8 @@ import { createClient } from '@supabase/supabase-js';
 const meta = import.meta as any;
 const env = meta.env || {};
 
-const SUPABASE_URL = env.VITE_SUPABASE_URL || 'https://fawhhpizdggmzsmsblwv.supabase.co';
-const SUPABASE_KEY = env.VITE_SUPABASE_KEY || 'sb_publishable_F9b7k4TZvGTjKyy6W3dEDQ_D4nMd_cD';
+const SUPABASE_URL = env.VITE_SUPABASE_URL || 'https://hiusbssratddazituwyo.supabase.co';
+const SUPABASE_KEY = env.VITE_SUPABASE_KEY || 'sb_publishable_6I9GNAeE2RB08ja7w98chA__UoSyrvC';
 
 if (env.PROD && !env.VITE_SUPABASE_URL) {
     console.warn('WARNING: VITE_SUPABASE_URL is missing in production environment variables.');
