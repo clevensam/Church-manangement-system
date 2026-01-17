@@ -1,14 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabaseClient';
-import { UserProfile } from '../types';
+import { User } from '../types';
 import { api } from '../services/supabaseService';
 
 interface AuthContextType {
-  session: Session | null;
-  user: User | null;
-  profile: UserProfile | null;
+  session: boolean;
+  profile: User | null;
   loading: boolean;
+  login: (email: string, pass: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -16,69 +14,55 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Helper to fetch profile data from the separate 'profiles' table
-  const fetchProfile = async (userId: string) => {
-    try {
-      const profileData = await api.profiles.getCurrent(userId);
-      setProfile(profileData);
-    } catch (error) {
-      console.error('Failed to load profile', error);
-      setProfile(null);
-    }
-  };
-
   useEffect(() => {
-    // 1. Check active session on startup
-    const initSession = async () => {
-      setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        await fetchProfile(session.user.id);
-      }
-      setLoading(false);
-    };
-
-    initSession();
-
-    // 2. Listen for auth changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        // Only fetch profile if we don't have it or user changed
-        await fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    // Check for saved session in localStorage
+    const savedUser = localStorage.getItem('kanisa_user');
+    if (savedUser) {
+        try {
+            setProfile(JSON.parse(savedUser));
+        } catch (e) {
+            localStorage.removeItem('kanisa_user');
+        }
+    }
+    setLoading(false);
   }, []);
 
+  const login = async (email: string, pass: string) => {
+      setLoading(true);
+      try {
+          const user = await api.auth.login(email, pass);
+          setProfile(user);
+          localStorage.setItem('kanisa_user', JSON.stringify(user));
+      } finally {
+          setLoading(false);
+      }
+  };
+
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setSession(null);
-    setUser(null);
+    localStorage.removeItem('kanisa_user');
     setProfile(null);
   };
 
   const refreshProfile = async () => {
-      if (user) await fetchProfile(user.id);
+      // In this simple model, we just re-sync from localStorage or could fetch from DB if needed
+      // For now, assume state is source of truth or re-fetch from DB if we had a specific endpoint
+      if (profile?.id) {
+          // Optional: Fetch fresh data from DB? 
+          // For simplicity in this demo, we assume local state is valid or update manually
+          const users = await api.admin.getAllUsers();
+          const me = users.find(u => u.id === profile.id);
+          if (me) {
+              setProfile(me);
+              localStorage.setItem('kanisa_user', JSON.stringify(me));
+          }
+      }
   }
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ session: !!profile, profile, loading, login, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

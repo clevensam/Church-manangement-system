@@ -1,63 +1,53 @@
 import { supabase } from '../lib/supabaseClient';
-import { Expense, RegularOffering, Donor, EnvelopeOffering, Fellowship, UserProfile, AppUser } from '../types';
+import { Expense, RegularOffering, Donor, EnvelopeOffering, Fellowship, User } from '../types';
 
 export const api = {
-  // 0. Profiles & Auth API
-  profiles: {
-    getCurrent: async (userId: string): Promise<UserProfile | null> => {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
+  // 0. Auth API (Custom Table Auth)
+  auth: {
+    login: async (email: string, password: string): Promise<User> => {
+        const { data, error } = await supabase.rpc('login_user', {
+            user_email: email,
+            user_password: password
+        });
+
+        if (error) throw error;
+        if (!data) throw new Error('Invalid login credentials');
         
-        if (error) {
-            console.error('Error fetching profile:', error);
-            return null;
-        }
-        return data;
+        return data as User;
     },
-    completePasswordReset: async (userId: string) => {
-        const { error } = await supabase
-            .from('profiles')
-            .update({ must_change_password: false })
-            .eq('id', userId);
-        
+    changePassword: async (userId: string, newPassword: string): Promise<void> => {
+        const { error } = await supabase.rpc('change_my_password', {
+            user_id: userId,
+            new_password: newPassword
+        });
         if (error) throw error;
     }
   },
 
   // 0.1 Admin API
   admin: {
-      getAllUsers: async (): Promise<AppUser[]> => {
-          const { data, error } = await supabase.rpc('get_users_list');
+      getAllUsers: async (): Promise<User[]> => {
+          const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .order('created_at', { ascending: false });
+            
           if (error) throw error;
-          return data || [];
+          return data as User[];
       },
       createUser: async (userData: { email: string; full_name: string; role: string; password: string }) => {
-          // In a real production environment, this should call a Supabase Edge Function
-          // because 'supabase.auth.admin.createUser' is not available in the client.
-          // Example: 
-          // const { data, error } = await supabase.functions.invoke('create-user', { body: userData });
-          
-          // FOR DEMONSTRATION/INTERNAL TOOLS WITHOUT EDGE FUNCTIONS:
-          // We might simulate this or rely on the fact that we've been asked to "build the system".
-          // I will implement the client-side call to a Function.
-          
-          const { data, error } = await supabase.functions.invoke('create-user', {
-              body: userData
+          const { data, error } = await supabase.rpc('create_new_user', {
+              new_email: userData.email,
+              new_password: userData.password,
+              new_name: userData.full_name,
+              new_role: userData.role
           });
 
-          if (error) {
-             console.error("Function invoke error:", error);
-             throw new Error("Imeshindikana kuunda mtumiaji. Tafadhali hakikisha 'create-user' Edge Function ipo.");
-          }
-          return data;
+          if (error) throw error;
+          return data; // Returns ID
       },
       deleteUser: async (userId: string) => {
-          const { error } = await supabase.functions.invoke('delete-user', {
-              body: { userId }
-          });
+          const { error } = await supabase.from('users').delete().eq('id', userId);
           if (error) throw error;
       }
   },
@@ -187,6 +177,16 @@ export const api = {
           throw error;
       }
       return newRecord;
+    },
+    update: async (id: string, data: Partial<Donor>): Promise<Donor> => {
+         const { data: newRecord, error } = await supabase
+        .from('donors')
+        .update(data)
+        .eq('envelope_number', id)
+        .select()
+        .single();
+        if(error) throw error;
+        return newRecord;
     }
   },
 

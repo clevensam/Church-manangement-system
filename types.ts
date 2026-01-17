@@ -2,18 +2,19 @@
 
 export type UserRole = 'admin' | 'pastor' | 'accountant' | 'jumuiya_leader';
 
-export interface UserProfile {
+export interface User {
   id: string;
+  email: string;
   full_name: string;
   role: UserRole;
   must_change_password: boolean;
+  last_sign_in_at?: string;
+  created_at?: string;
 }
 
-export interface AppUser extends UserProfile {
-    email: string;
-    last_sign_in_at?: string;
-    created_at: string;
-}
+// Deprecated: Alias for backward compatibility if needed, but User is preferred
+export type AppUser = User;
+export type UserProfile = User;
 
 export interface Expense {
   id: string;

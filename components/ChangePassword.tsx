@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
 import { api } from '../services/supabaseService';
 import { useAuth } from '../contexts/AuthContext';
-import { Lock, Save, Loader2, LogOut, CheckCircle2 } from 'lucide-react';
+import { Lock, Save, Loader2, LogOut } from 'lucide-react';
 
 const ChangePassword: React.FC = () => {
-    const { user, refreshProfile, signOut } = useAuth();
+    const { profile, refreshProfile, signOut } = useAuth();
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -28,17 +27,10 @@ const ChangePassword: React.FC = () => {
         setLoading(true);
 
         try {
-            // 1. Update Auth User Password
-            const { error: authError } = await supabase.auth.updateUser({ password });
-            if (authError) throw authError;
-
-            // 2. Update Profile Flag
-            if (user) {
-                await api.profiles.completePasswordReset(user.id);
+            if (profile) {
+                await api.auth.changePassword(profile.id, password);
+                await refreshProfile();
             }
-
-            // 3. Refresh context to unlock the dashboard
-            await refreshProfile();
         } catch (err: any) {
             setError(err.message || "Imeshindikana kubadili nenosiri.");
             setLoading(false);

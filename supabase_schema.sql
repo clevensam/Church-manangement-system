@@ -1,6 +1,5 @@
--- Enable UUID extension for unique identifiers
+-- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- Enable PGCrypto for password hashing
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
@@ -12,7 +11,19 @@ BEGIN
     END IF;
 END $$;
 
--- 1. Tables (Idempotent creation)
+-- 1. Create Custom Users Table (Replaces auth.users & profiles)
+CREATE TABLE IF NOT EXISTS public.users (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    full_name TEXT NOT NULL,
+    role public.user_role DEFAULT 'jumuiya_leader',
+    must_change_password BOOLEAN DEFAULT FALSE,
+    last_sign_in_at TIMESTAMP WITH TIME ZONE
+);
+
+-- 2. Data Tables
 CREATE TABLE IF NOT EXISTS public.fellowships (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -50,120 +61,102 @@ CREATE TABLE IF NOT EXISTS public.envelope_offerings (
     envelope_number TEXT NOT NULL REFERENCES public.donors(envelope_number) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS public.profiles (
-    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    full_name TEXT,
-    role public.user_role DEFAULT 'jumuiya_leader',
-    must_change_password BOOLEAN DEFAULT TRUE
-);
+-- 3. Auth Functions (RPC)
 
--- 2. Helper Functions (Fixing Recursion)
-
--- Helper to check if current user is admin without triggering RLS on profiles table
-CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS BOOLEAN AS $$
+-- Login Function
+CREATE OR REPLACE FUNCTION public.login_user(user_email TEXT, user_password TEXT)
+RETURNS json AS $$
+DECLARE
+  found_user public.users;
 BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'admin'
-  );
+  SELECT * INTO found_user FROM public.users WHERE email = user_email;
+  
+  IF found_user.id IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  -- Check password using pgcrypto
+  IF found_user.password_hash = crypt(user_password, found_user.password_hash) THEN
+    -- Update last sign in
+    UPDATE public.users SET last_sign_in_at = now() WHERE id = found_user.id;
+    
+    RETURN json_build_object(
+      'id', found_user.id,
+      'email', found_user.email,
+      'full_name', found_user.full_name,
+      'role', found_user.role,
+      'must_change_password', found_user.must_change_password
+    );
+  ELSE
+    RETURN NULL;
+  END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Trigger to handle new user creation
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+-- Change Password Function
+CREATE OR REPLACE FUNCTION public.change_my_password(user_id UUID, new_password TEXT)
+RETURNS VOID AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, role, must_change_password)
+  UPDATE public.users 
+  SET password_hash = crypt(new_password, gen_salt('bf')),
+      must_change_password = FALSE
+  WHERE id = user_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create User Function (Admin)
+CREATE OR REPLACE FUNCTION public.create_new_user(
+    new_email TEXT, 
+    new_password TEXT, 
+    new_name TEXT, 
+    new_role public.user_role
+)
+RETURNS UUID AS $$
+DECLARE
+  new_id UUID;
+BEGIN
+  INSERT INTO public.users (email, password_hash, full_name, role, must_change_password)
   VALUES (
-    new.id, 
-    new.raw_user_meta_data->>'full_name', 
-    COALESCE((new.raw_user_meta_data->>'role')::public.user_role, 'jumuiya_leader'),
+    new_email, 
+    crypt(new_password, gen_salt('bf')), 
+    new_name, 
+    new_role, 
     TRUE
   )
-  ON CONFLICT (id) DO NOTHING;
-  RETURN new;
+  RETURNING id INTO new_id;
+  
+  RETURN new_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+-- 4. Open RLS Policies (Since we manage auth manually now)
 
--- 3. Row Level Security
-
+-- Enable RLS on all tables
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fellowships ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.donors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.regular_offerings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.envelope_offerings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
--- Reset policies
+-- Drop old policies to prevent conflicts
 DO $$
 BEGIN
-    DROP POLICY IF EXISTS "Enable access for authenticated users" ON public.fellowships;
-    DROP POLICY IF EXISTS "Enable access for authenticated users" ON public.expenses;
-    DROP POLICY IF EXISTS "Enable access for authenticated users" ON public.donors;
-    DROP POLICY IF EXISTS "Enable access for authenticated users" ON public.regular_offerings;
-    DROP POLICY IF EXISTS "Enable access for authenticated users" ON public.envelope_offerings;
-    DROP POLICY IF EXISTS "Users can read own profile" ON public.profiles;
-    DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
-    DROP POLICY IF EXISTS "Admins can read all profiles" ON public.profiles;
+    DROP POLICY IF EXISTS "Allow public access" ON public.users;
+    DROP POLICY IF EXISTS "Allow public access" ON public.fellowships;
+    DROP POLICY IF EXISTS "Allow public access" ON public.expenses;
+    DROP POLICY IF EXISTS "Allow public access" ON public.donors;
+    DROP POLICY IF EXISTS "Allow public access" ON public.regular_offerings;
+    DROP POLICY IF EXISTS "Allow public access" ON public.envelope_offerings;
 END $$;
 
--- General Policies
-CREATE POLICY "Enable access for authenticated users" ON public.fellowships FOR ALL TO authenticated USING (true);
-CREATE POLICY "Enable access for authenticated users" ON public.expenses FOR ALL TO authenticated USING (true);
-CREATE POLICY "Enable access for authenticated users" ON public.donors FOR ALL TO authenticated USING (true);
-CREATE POLICY "Enable access for authenticated users" ON public.regular_offerings FOR ALL TO authenticated USING (true);
-CREATE POLICY "Enable access for authenticated users" ON public.envelope_offerings FOR ALL TO authenticated USING (true);
+-- Create Permissive Policies (Allow the app to read/write without JWT)
+CREATE POLICY "Allow public access" ON public.users FOR ALL TO public USING (true);
+CREATE POLICY "Allow public access" ON public.fellowships FOR ALL TO public USING (true);
+CREATE POLICY "Allow public access" ON public.expenses FOR ALL TO public USING (true);
+CREATE POLICY "Allow public access" ON public.donors FOR ALL TO public USING (true);
+CREATE POLICY "Allow public access" ON public.regular_offerings FOR ALL TO public USING (true);
+CREATE POLICY "Allow public access" ON public.envelope_offerings FOR ALL TO public USING (true);
 
--- Profile Policies (Fixed)
-CREATE POLICY "Users can read own profile" ON public.profiles 
-    FOR SELECT TO authenticated 
-    USING (auth.uid() = id);
-
-CREATE POLICY "Users can update own profile" ON public.profiles 
-    FOR UPDATE TO authenticated 
-    USING (auth.uid() = id);
-
--- Use SECURITY DEFINER function to avoid infinite recursion
-CREATE POLICY "Admins can read all profiles" ON public.profiles 
-    FOR SELECT TO authenticated 
-    USING (public.is_admin());
-
--- 4. Admin Functions
-CREATE OR REPLACE FUNCTION public.get_users_list()
-RETURNS TABLE (
-  id UUID,
-  email TEXT,
-  full_name TEXT,
-  role public.user_role,
-  must_change_password BOOLEAN,
-  last_sign_in_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE
-) 
-SECURITY DEFINER
-AS $$
-BEGIN
-  IF NOT public.is_admin() THEN
-    RAISE EXCEPTION 'Access denied. Admins only.';
-  END IF;
-
-  RETURN QUERY
-  SELECT 
-    p.id,
-    u.email::TEXT,
-    p.full_name,
-    p.role,
-    p.must_change_password,
-    u.last_sign_in_at,
-    p.created_at
-  FROM public.profiles p
-  JOIN auth.users u ON p.id = u.id
-  ORDER BY p.created_at DESC;
-END;
-$$ LANGUAGE plpgsql;
+-- Drop unused tables if they exist (Cleanup)
+DROP TABLE IF EXISTS public.profiles CASCADE;

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/supabaseService';
-import { AppUser, UserRole } from '../types';
-import { Plus, Search, Shield, ShieldCheck, User, Trash2, Mail, Lock, X, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
+import { User, UserRole } from '../types';
+import { Plus, Search, Shield, ShieldCheck, User as UserIcon, Lock, X, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 import LoadingCross from './LoadingCross';
 
 const AdminUsers: React.FC = () => {
-  const [users, setUsers] = useState<AppUser[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -45,9 +45,9 @@ const AdminUsers: React.FC = () => {
   const getRoleBadge = (role: UserRole) => {
       switch(role) {
           case 'admin': return <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold flex items-center w-fit gap-1"><ShieldCheck className="w-3 h-3" /> Admin</span>;
-          case 'pastor': return <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold flex items-center w-fit gap-1"><User className="w-3 h-3" /> Mchungaji</span>;
+          case 'pastor': return <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold flex items-center w-fit gap-1"><UserIcon className="w-3 h-3" /> Mchungaji</span>;
           case 'accountant': return <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold flex items-center w-fit gap-1"><Shield className="w-3 h-3" /> Mhasibu</span>;
-          default: return <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold flex items-center w-fit gap-1"><User className="w-3 h-3" /> Kiongozi</span>;
+          default: return <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold flex items-center w-fit gap-1"><UserIcon className="w-3 h-3" /> Kiongozi</span>;
       }
   };
 
@@ -158,7 +158,7 @@ const AdminUsers: React.FC = () => {
                                            )}
                                        </td>
                                        <td className="px-6 py-4 text-slate-500">
-                                           {new Date(user.created_at).toLocaleDateString()}
+                                           {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
                                        </td>
                                    </tr>
                                ))

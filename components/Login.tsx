@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
 import { Banknote, Loader2, AlertCircle } from 'lucide-react';
 
 const Login: React.FC = () => {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,20 +15,11 @@ const Login: React.FC = () => {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-            throw new Error('Baruapepe au nenosiri si sahihi.');
-        }
-        throw error;
-      }
-      // AuthStateChange in AuthProvider will handle the redirect/state update
+      await login(email, password);
+      // AuthProvider updates state, App.tsx renders content
     } catch (err: any) {
-      setError(err.message || 'Hitilafu imetokea wakati wa kuingia.');
+      console.error(err);
+      setError(err.message || 'Hitilafu imetokea. Hakikisha baruapepe na nenosiri ni sahihi.');
     } finally {
       setLoading(false);
     }
