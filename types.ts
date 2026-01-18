@@ -54,6 +54,7 @@ export interface EnvelopeOffering {
   envelope_number: string; // FK
   amount: number;
   offering_date: string;
+  bahasha_type: 'Ahadi' | 'Jengo' | string; // New Field
   // Optional expanded field for UI convenience if joining tables
   donor_name?: string; 
 }

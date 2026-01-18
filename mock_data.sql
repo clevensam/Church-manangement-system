@@ -48,8 +48,8 @@ INSERT INTO public.expenses (expense_date, description, amount) VALUES
 ON CONFLICT DO NOTHING;
 
 -- 5. SEED ENVELOPE OFFERINGS
-INSERT INTO public.envelope_offerings (offering_date, envelope_number, amount) VALUES
-('2024-01-07', '101', 10000.00),
-('2024-01-07', '105', 20000.00),
-('2024-01-07', '110', 5000.00)
+INSERT INTO public.envelope_offerings (offering_date, envelope_number, amount, bahasha_type) VALUES
+('2024-01-07', '101', 10000.00, 'Ahadi'),
+('2024-01-07', '105', 20000.00, 'Jengo'),
+('2024-01-07', '110', 5000.00, 'Ahadi')
 ON CONFLICT DO NOTHING;

@@ -54,7 +54,8 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
   const [envForm, setEnvForm] = useState({
     offering_date: new Date().toISOString().split('T')[0],
     envelope_number: '',
-    amount: 0
+    amount: 0,
+    bahasha_type: 'Ahadi' // Default
   });
   
   // Donor Lookup State
@@ -126,7 +127,8 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
               setEnvForm({
                   offering_date: item.offering_date,
                   envelope_number: item.envelope_number,
-                  amount: item.amount
+                  amount: item.amount,
+                  bahasha_type: item.bahasha_type || 'Ahadi'
               });
               setDisplayAmount(item.amount.toLocaleString());
               // Set matched donor for edit mode
@@ -149,7 +151,8 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
     setEnvForm(prev => ({
         offering_date: prev.offering_date || new Date().toISOString().split('T')[0],
         envelope_number: '', // Reset number
-        amount: 0
+        amount: 0,
+        bahasha_type: 'Ahadi'
     }));
     setDisplayAmount('');
     setMatchedDonor(null);
@@ -304,6 +307,25 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
         <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Tarehe</label>
             <input type="date" required className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" value={envForm.offering_date} onChange={e => setEnvForm({...envForm, offering_date: e.target.value})} />
+        </div>
+        <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Aina ya Bahasha</label>
+            <div className="grid grid-cols-2 gap-2">
+                <button
+                    type="button"
+                    onClick={() => setEnvForm({...envForm, bahasha_type: 'Ahadi'})}
+                    className={`py-3 rounded-xl border font-semibold text-sm transition-all ${envForm.bahasha_type === 'Ahadi' ? 'bg-indigo-50 border-indigo-200 text-indigo-700 ring-2 ring-indigo-500/20' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                >
+                    Ahadi
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setEnvForm({...envForm, bahasha_type: 'Jengo'})}
+                    className={`py-3 rounded-xl border font-semibold text-sm transition-all ${envForm.bahasha_type === 'Jengo' ? 'bg-orange-50 border-orange-200 text-orange-700 ring-2 ring-orange-500/20' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                >
+                    Jengo
+                </button>
+            </div>
         </div>
         <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Namba ya Bahasha</label>
@@ -493,8 +515,13 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
                             <div>
                                 <div className="flex items-center gap-2 mb-1">
                                     <span className="font-bold text-slate-800">#{item.envelope_number}</span>
-                                    <span className="text-sm text-slate-600">{item.donor_name}</span>
+                                    {item.bahasha_type === 'Jengo' ? (
+                                        <span className="px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 text-[10px] font-bold uppercase">Jengo</span>
+                                    ) : (
+                                        <span className="px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase">Ahadi</span>
+                                    )}
                                 </div>
+                                <div className="text-sm text-slate-600 mb-1">{item.donor_name}</div>
                                 <div className="flex items-center gap-1 text-xs text-slate-500">
                                     <Calendar className="w-3 h-3" /> {new Date(item.offering_date).toLocaleDateString()}
                                 </div>
@@ -517,6 +544,7 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
                             <tr>
                                 <th className="px-6 py-4">Tarehe</th>
                                 <th className="px-6 py-4">Bahasha</th>
+                                <th className="px-6 py-4">Aina</th>
                                 <th className="px-6 py-4">Jina</th>
                                 <th className="px-6 py-4 text-right">Kiasi</th>
                                 {canManageEnvelope && <th className="px-6 py-4 text-center">Matendo</th>}
@@ -524,12 +552,19 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
-                              <tr><td colSpan={canManageEnvelope ? 5 : 4} className="px-6 py-8 text-center"><LoadingCross /></td></tr>
+                              <tr><td colSpan={canManageEnvelope ? 6 : 5} className="px-6 py-8 text-center"><LoadingCross /></td></tr>
                             ) : (
                                 filteredEnv.map((item) => (
                                 <tr key={item.id} className="hover:bg-slate-50">
                                     <td className="px-6 py-4">{new Date(item.offering_date).toLocaleDateString()}</td>
                                     <td className="px-6 py-4 font-bold">#{item.envelope_number}</td>
+                                    <td className="px-6 py-4">
+                                        {item.bahasha_type === 'Jengo' ? (
+                                            <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-bold">Jengo</span>
+                                        ) : (
+                                            <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold">Ahadi</span>
+                                        )}
+                                    </td>
                                     <td className="px-6 py-4">{item.donor_name}</td>
                                     <td className="px-6 py-4 text-right font-mono">{item.amount.toLocaleString()}</td>
                                     {canManageEnvelope && (

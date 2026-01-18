@@ -58,7 +58,8 @@ CREATE TABLE IF NOT EXISTS public.envelope_offerings (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     offering_date DATE NOT NULL,
     amount DECIMAL(12, 2) NOT NULL,
-    envelope_number TEXT NOT NULL REFERENCES public.donors(envelope_number) ON DELETE RESTRICT ON UPDATE CASCADE
+    envelope_number TEXT NOT NULL REFERENCES public.donors(envelope_number) ON DELETE RESTRICT ON UPDATE CASCADE,
+    bahasha_type TEXT NOT NULL DEFAULT 'Ahadi'
 );
 
 -- 3. Auth Functions (RPC)

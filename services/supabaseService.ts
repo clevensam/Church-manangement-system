@@ -210,6 +210,7 @@ export const api = {
         envelope_number: item.envelope_number,
         amount: item.amount,
         offering_date: item.offering_date,
+        bahasha_type: item.bahasha_type,
         donor_name: item.donors?.donor_name || 'Haijulikani'
       }));
     },
