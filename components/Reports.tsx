@@ -224,17 +224,11 @@ const Reports: React.FC = () => {
           );
       }
 
-      // Calculate ColSpan dynamically based on report type
-      // Envelope: Date, Number, Name, Type, Amount (5 cols) -> Span 4
-      // Regular: Date, Name/Desc, Type, Amount (4 cols) -> Span 3
-      // Expense: Date, Desc, Amount (3 cols) -> Span 2
-      const footerColSpan = selectedReport === 'envelope' ? 4 : (selectedReport === 'regular' ? 3 : 2);
-
       return (
           <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               
-              {/* Summary Text (Text-based only) */}
-              <div className="mb-6 print:mb-8 flex flex-col gap-1">
+              {/* Summary Text (Text-based only) - Removed here, moved to bottom for print */}
+              <div className="mb-6 print:hidden flex flex-col gap-1">
                    <p className="text-sm uppercase text-slate-500 font-bold tracking-wider">Jumla Kuu</p>
                    <p className="text-3xl font-mono font-bold text-slate-900">{calculateTotal().toLocaleString()} TZS</p>
               </div>
@@ -253,11 +247,17 @@ const Reports: React.FC = () => {
                       <thead className="bg-slate-50 text-slate-900 font-bold uppercase text-xs print:bg-transparent print:border-b-2 print:border-black">
                           <tr>
                               <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Tarehe</th>
+                              
                               {selectedReport === 'envelope' && <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Namba</th>}
-                              <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Maelezo / Jina</th>
-                              {/* Removed Jumuiya Column Header */}
+                              
+                              {/* Only show 'Maelezo / Jina' for Expense and Envelope reports */}
+                              {selectedReport !== 'regular' && (
+                                <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Maelezo / Jina</th>
+                              )}
+                              
                               {selectedReport === 'envelope' && <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Aina</th>}
                               {selectedReport === 'regular' && <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Aina ya Ibada</th>}
+                              
                               <th className="px-6 py-4 border-b border-slate-200 print:border-black text-right">Kiasi (TZS)</th>
                           </tr>
                       </thead>
@@ -274,11 +274,11 @@ const Reports: React.FC = () => {
                                       </td>
                                   )}
 
-                                  <td className="px-6 py-4 border-r border-slate-100 print:border-black">
-                                      {item.description || item.donor_name || '-'}
-                                  </td>
-                                  
-                                  {/* Removed Jumuiya Data Cell */}
+                                  {selectedReport !== 'regular' && (
+                                      <td className="px-6 py-4 border-r border-slate-100 print:border-black">
+                                          {item.description || item.donor_name || '-'}
+                                      </td>
+                                  )}
                                   
                                   {selectedReport === 'envelope' && (
                                       <td className="px-6 py-4 border-r border-slate-100 print:border-black">
@@ -301,13 +301,15 @@ const Reports: React.FC = () => {
                               </tr>
                           ))}
                       </tbody>
-                      <tfoot className="bg-slate-50 font-bold border-t border-slate-200 print:bg-transparent print:border-t-2 print:border-black">
-                          <tr>
-                             <td colSpan={footerColSpan} className="px-6 py-4 text-right uppercase text-xs text-slate-500 print:text-black border-r border-slate-200 print:border-black">Jumla Kuu</td>
-                             <td className="px-6 py-4 text-right font-mono text-xl text-slate-900 print:text-black">{calculateTotal().toLocaleString()}</td>
-                          </tr>
-                      </tfoot>
                   </table>
+              </div>
+
+              {/* Total Summary (Outside Table for Last Page Print) */}
+              <div className="flex justify-end mt-0 border-t border-slate-200 print:border-black">
+                 <div className="flex items-center gap-8 px-6 py-6 border-l border-r border-b border-slate-200 bg-slate-50 print:bg-transparent print:border-black print:border-t-2 rounded-b-xl print:rounded-none">
+                     <span className="uppercase text-xs text-slate-500 print:text-black font-extrabold tracking-wider">Jumla Kuu</span>
+                     <span className="font-mono text-2xl text-slate-900 print:text-black font-bold">{calculateTotal().toLocaleString()}</span>
+                 </div>
               </div>
               
               {/* Print Footer */}
@@ -350,7 +352,12 @@ const Reports: React.FC = () => {
               table { border-collapse: collapse; width: 100%; font-size: 11pt; }
               th, td { border: 1px solid #000; padding: 12px; }
               thead th { background-color: #f0f0f0 !important; color: #000 !important; font-weight: 800; }
-              tfoot td { font-weight: 800; }
+              
+              /* Ensure the table header repeats on new pages */
+              thead { display: table-header-group; }
+              
+              /* Ensure rows don't break awkwardly */
+              tr { page-break-inside: avoid; }
           }
       `}</style>
     </div>
