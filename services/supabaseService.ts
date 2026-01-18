@@ -1,5 +1,6 @@
+
 import { supabase } from '../lib/supabaseClient';
-import { Expense, RegularOffering, Donor, EnvelopeOffering, Fellowship, User } from '../types';
+import { Expense, RegularOffering, Donor, EnvelopeOffering, Fellowship, User, JengoPledge } from '../types';
 
 export const api = {
   // 0. Auth API (Custom Table Auth)
@@ -255,7 +256,54 @@ export const api = {
     }
   },
 
-  // 8. Reports
+  // 8. Jengo (Building Fund) API
+  jengo: {
+      getAllPledges: async (): Promise<JengoPledge[]> => {
+          // 1. Get All Donors
+          const { data: donors, error: donorsError } = await supabase.from('donors').select(`*, fellowships(name)`);
+          if (donorsError) throw donorsError;
+
+          // 2. Get All Pledges (Goals)
+          const { data: pledges, error: pledgesError } = await supabase.from('jengo_pledges').select('*');
+          if (pledgesError) throw pledgesError;
+
+          // 3. Get All Offerings specifically for 'Jengo'
+          const { data: offerings, error: offeringsError } = await supabase
+            .from('envelope_offerings')
+            .select('envelope_number, amount')
+            .eq('bahasha_type', 'Jengo');
+          if (offeringsError) throw offeringsError;
+
+          // 4. Merge Data in JS
+          return (donors || []).map((donor: any) => {
+              const pledgeRecord = pledges?.find(p => p.envelope_number === donor.envelope_number);
+              const totalPaid = offerings
+                ?.filter(o => o.envelope_number === donor.envelope_number)
+                .reduce((sum, o) => sum + o.amount, 0) || 0;
+
+              const pledgeAmount = pledgeRecord ? pledgeRecord.amount : 0;
+
+              return {
+                  envelope_number: donor.envelope_number,
+                  donor_name: donor.donor_name,
+                  fellowship_name: donor.fellowships?.name || 'Hana Jumuiya',
+                  amount: pledgeAmount,
+                  paid_amount: totalPaid,
+                  remaining_amount: Math.max(0, pledgeAmount - totalPaid)
+              };
+          });
+      },
+      upsertPledge: async (envelope_number: string, amount: number) => {
+          const { error } = await supabase
+            .from('jengo_pledges')
+            .upsert({ envelope_number, amount })
+            .select();
+            
+          if (error) throw error;
+      }
+  },
+
+  // 9. Reports
   reports: {
     getSummary: async () => {
         const { data: exp } = await supabase.from('expenses').select('amount');

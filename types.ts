@@ -60,6 +60,16 @@ export interface EnvelopeOffering {
   fellowship_name?: string;
 }
 
+export interface JengoPledge {
+    envelope_number: string;
+    amount: number; // The target/pledged amount
+    // Computed fields for UI
+    paid_amount?: number;
+    remaining_amount?: number;
+    donor_name?: string;
+    fellowship_name?: string;
+}
+
 export interface FinancialSummary {
   totalIncome: number;
   totalExpenses: number;

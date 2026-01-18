@@ -15,13 +15,13 @@ const Donors = lazy(() => import('./components/Donors'));
 const AdminUsers = lazy(() => import('./components/AdminUsers'));
 const Profile = lazy(() => import('./components/Profile'));
 const Reports = lazy(() => import('./components/Reports'));
+const JengoPledges = lazy(() => import('./components/JengoPledges'));
 
 // --- Access Control Configuration ---
 const ROLE_PERMISSIONS: Record<string, string[]> = {
-    'admin': ['dashboard', 'expenses', 'expenses-list', 'expenses-add', 'offerings', 'offerings-list', 'offerings-add', 'donors', 'donors-list', 'donors-add', 'reports', 'admin', 'profile'],
+    'admin': ['dashboard', 'jengo', 'expenses', 'expenses-list', 'expenses-add', 'offerings', 'offerings-list', 'offerings-add', 'donors', 'donors-list', 'donors-add', 'reports', 'admin', 'profile'],
     'accountant': ['dashboard', 'expenses', 'expenses-list', 'expenses-add', 'offerings', 'offerings-list', 'offerings-add', 'donors', 'donors-list', 'reports', 'profile'],
-    // UPDATED: Removed expenses access for jumuiya_leader
-    'jumuiya_leader': ['dashboard', 'offerings', 'offerings-list', 'offerings-add', 'donors', 'donors-list', 'donors-add', 'reports', 'profile'],
+    'jumuiya_leader': ['dashboard', 'jengo', 'offerings', 'offerings-list', 'offerings-add', 'donors', 'donors-list', 'donors-add', 'reports', 'profile'],
     'pastor': ['dashboard', 'expenses', 'expenses-list', 'offerings', 'offerings-list', 'donors', 'donors-list', 'reports', 'profile']
 };
 
@@ -98,6 +98,8 @@ const AppContent = () => {
         switch (activeTab) {
             case 'dashboard': return <Dashboard searchTerm={dashboardSearch} />;
             
+            case 'jengo': return <JengoPledges />;
+
             case 'expenses': 
             case 'expenses-list': return <Expenses viewMode="list" />;
             case 'expenses-add': return <Expenses viewMode="add" />;

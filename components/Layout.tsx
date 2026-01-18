@@ -14,7 +14,8 @@ import {
   ChevronDown,
   List,
   PlusCircle,
-  ShieldCheck 
+  ShieldCheck,
+  Building 
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -47,14 +48,19 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
         allowedRoles: ['admin', 'pastor', 'accountant', 'jumuiya_leader']
     },
     { 
+        id: 'jengo', 
+        label: 'Michango ya Jengo', 
+        icon: Building, 
+        allowedRoles: ['admin', 'jumuiya_leader'] 
+    },
+    { 
       id: 'expenses', 
       label: 'Matumizi', 
       icon: CreditCard,
-      // UPDATED: Removed 'jumuiya_leader' from allowedRoles
       allowedRoles: ['admin', 'pastor', 'accountant'],
       subItems: [
         { id: 'expenses-list', label: 'Orodha', icon: List },
-        { id: 'expenses-add', label: 'Rekodi Mpya', icon: PlusCircle }, // Permission checked inside Layout logic below
+        { id: 'expenses-add', label: 'Rekodi Mpya', icon: PlusCircle }, 
       ]
     },
     { 
@@ -240,7 +246,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
         {/* Footer */}
         <div className="p-4 border-t border-slate-100 text-center">
             <span className={`text-[10px] text-slate-400 ${isCollapsed ? 'hidden' : 'block'}`}>
-                v1.0.0 &copy; 2024
+                v1.1.0 &copy; 2024
             </span>
         </div>
       </aside>
@@ -249,7 +255,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
       {/* --- MOBILE BOTTOM NAVIGATION --- */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white/90 backdrop-blur-xl border-t border-slate-200 pb-safe-area shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] print:hidden">
         <div className="flex justify-around items-center h-16 px-2">
-          {filteredNavItems.map((item) => {
+          {filteredNavItems.slice(0, 5).map((item) => {
             const Icon = item.icon;
             const targetId = item.subItems ? item.subItems[0].id : item.id;
             const isActive = activeParentId === item.id;
