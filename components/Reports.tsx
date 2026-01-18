@@ -5,7 +5,7 @@ import { Fellowship, EnvelopeOffering, RegularOffering, Expense, ServiceType } f
 import { FileText, Download, Filter, Printer, Banknote, Calendar, Layers, Search } from 'lucide-react';
 import LoadingCross from './LoadingCross';
 
-type ReportType = 'envelope' | 'regular' | 'expense';
+type ReportType = 'envelope' | 'regular' | 'expense' | 'jengo';
 
 const Reports: React.FC = () => {
   const { profile } = useAuth();
@@ -48,12 +48,19 @@ const Reports: React.FC = () => {
 
   // Determine Available Reports
   const availableReports: {id: ReportType, label: string}[] = [];
+  
   if (['admin', 'pastor', 'jumuiya_leader'].includes(profile?.role || '')) {
       availableReports.push({ id: 'envelope', label: 'Sadaka za Bahasha' });
   }
+  
   if (['admin', 'pastor', 'accountant'].includes(profile?.role || '')) {
       availableReports.push({ id: 'regular', label: 'Sadaka za Ibada' });
       availableReports.push({ id: 'expense', label: 'Matumizi' });
+  }
+
+  // Jengo Report: Admin, Pastor, Accountant Only
+  if (['admin', 'pastor', 'accountant'].includes(profile?.role || '')) {
+      availableReports.push({ id: 'jengo', label: 'Ahadi za Jengo' });
   }
 
   const handleGenerate = async () => {
@@ -96,6 +103,15 @@ const Reports: React.FC = () => {
                   const end = endDate ? new Date(endDate) : new Date(2100, 0, 1);
                   return date >= start && date <= end;
               });
+          } else if (selectedReport === 'jengo') {
+              // For Jengo, we fetch the status of pledges
+              const res = await api.jengo.getAllPledges();
+              data = res.filter(item => {
+                  // Jengo status is cumulative, usually doesn't filter by transaction date
+                  // But we allow filtering by Fellowship
+                  const fellowshipMatch = selectedFellowship === 'all' || item.fellowship_name === fellowships.find(f => f.id === selectedFellowship)?.name;
+                  return fellowshipMatch;
+              });
           }
 
           setReportData(data);
@@ -112,7 +128,20 @@ const Reports: React.FC = () => {
       window.print();
   };
 
-  const calculateTotal = () => reportData.reduce((sum, item) => sum + (item.amount || 0), 0);
+  const calculateTotal = () => {
+      // For Jengo report, we might want to sum the PAID amount
+      if (selectedReport === 'jengo') {
+          return reportData.reduce((sum, item) => sum + (item.paid_amount || 0), 0);
+      }
+      return reportData.reduce((sum, item) => sum + (item.amount || 0), 0);
+  };
+  
+  const calculateTotalPledged = () => {
+      if (selectedReport === 'jengo') {
+          return reportData.reduce((sum, item) => sum + (item.amount || 0), 0);
+      }
+      return 0;
+  };
 
   // --- RENDER HELPERS ---
   
@@ -137,19 +166,22 @@ const Reports: React.FC = () => {
 
           {/* 2. Filter Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Date Range */}
-              <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">Tarehe ya Kuanza</label>
-                  <input type="date" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-sm" value={startDate} onChange={e => setStartDate(e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase">Tarehe ya Mwisho</label>
-                  <input type="date" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-sm" value={endDate} onChange={e => setEndDate(e.target.value)} />
-              </div>
+              {/* Date Range - Hide for Jengo Status as it is cumulative snapshot */}
+              {selectedReport !== 'jengo' && (
+                  <>
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Tarehe ya Kuanza</label>
+                        <input type="date" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-sm" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Tarehe ya Mwisho</label>
+                        <input type="date" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-sm" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                    </div>
+                  </>
+              )}
 
               {/* Dynamic Filters based on Report Type */}
-              {selectedReport === 'envelope' && (
-                  <>
+              {(selectedReport === 'envelope' || selectedReport === 'jengo') && (
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Jumuiya</label>
                         <select className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-sm" value={selectedFellowship} onChange={e => setSelectedFellowship(e.target.value)}>
@@ -157,6 +189,9 @@ const Reports: React.FC = () => {
                             {fellowships.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                         </select>
                     </div>
+              )}
+              
+              {selectedReport === 'envelope' && (
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-slate-500 uppercase">Aina ya Bahasha</label>
                         <select className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-sm" value={selectedBahashaType} onChange={e => setSelectedBahashaType(e.target.value)}>
@@ -165,7 +200,6 @@ const Reports: React.FC = () => {
                             <option value="Jengo">Jengo</option>
                         </select>
                     </div>
-                  </>
               )}
 
               {selectedReport === 'regular' && (
@@ -219,6 +253,7 @@ const Reports: React.FC = () => {
                         {selectedReport === 'envelope' && 'Sadaka za Bahasha'}
                         {selectedReport === 'regular' && 'Sadaka za Ibada'}
                         {selectedReport === 'expense' && 'Matumizi'}
+                        {selectedReport === 'jengo' && 'Ahadi za Jengo'}
                     </h2>
                     <p className="text-xs text-slate-500 mt-1">Imetolewa: {new Date().toLocaleDateString('sw-TZ', { dateStyle: 'long' })}</p>
                 </div>
@@ -229,26 +264,29 @@ const Reports: React.FC = () => {
                 
                 {/* Dynamic Sorting Details */}
                 <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                    {/* Date always shows */}
-                    <div>
-                        <span className="block text-[10px] uppercase font-bold text-slate-500">Kipindi</span>
-                        <span className="font-semibold text-slate-900">
-                            {startDate ? new Date(startDate).toLocaleDateString() : 'Mwanzo'} — {endDate ? new Date(endDate).toLocaleDateString() : 'Sasa'}
-                        </span>
-                    </div>
+                    {/* Date always shows unless Jengo */}
+                    {selectedReport !== 'jengo' && (
+                        <div>
+                            <span className="block text-[10px] uppercase font-bold text-slate-500">Kipindi</span>
+                            <span className="font-semibold text-slate-900">
+                                {startDate ? new Date(startDate).toLocaleDateString() : 'Mwanzo'} — {endDate ? new Date(endDate).toLocaleDateString() : 'Sasa'}
+                            </span>
+                        </div>
+                    )}
 
                     {/* Report Specific Filters */}
+                    {(selectedReport === 'envelope' || selectedReport === 'jengo') && (
+                        <div>
+                            <span className="block text-[10px] uppercase font-bold text-slate-500">Jumuiya</span>
+                            <span className="font-semibold text-slate-900">{jumuiyaName}</span>
+                        </div>
+                    )}
+
                     {selectedReport === 'envelope' && (
-                        <>
-                            <div>
-                                <span className="block text-[10px] uppercase font-bold text-slate-500">Jumuiya</span>
-                                <span className="font-semibold text-slate-900">{jumuiyaName}</span>
-                            </div>
-                            <div className="mt-2">
-                                <span className="block text-[10px] uppercase font-bold text-slate-500">Aina ya Bahasha</span>
-                                <span className="font-semibold text-slate-900">{bahashaType}</span>
-                            </div>
-                        </>
+                        <div className="mt-2">
+                             <span className="block text-[10px] uppercase font-bold text-slate-500">Aina ya Bahasha</span>
+                             <span className="font-semibold text-slate-900">{bahashaType}</span>
+                        </div>
                     )}
 
                     {selectedReport === 'regular' && (
@@ -261,10 +299,22 @@ const Reports: React.FC = () => {
 
                 {/* Big Total at Header */}
                 <div className="text-right pl-8 border-l border-slate-200">
-                    <span className="block text-xs uppercase text-slate-500 font-extrabold tracking-wider mb-1">Jumla Kuu</span>
-                    <span className="block text-3xl font-mono font-bold text-slate-900 leading-none">
-                        {calculateTotal().toLocaleString()} <span className="text-sm font-sans font-medium text-slate-400">TZS</span>
-                    </span>
+                    {selectedReport === 'jengo' ? (
+                        <>
+                             <span className="block text-xs uppercase text-slate-500 font-extrabold tracking-wider mb-1">Jumla Imekusanywa</span>
+                             <span className="block text-3xl font-mono font-bold text-slate-900 leading-none">
+                                {calculateTotal().toLocaleString()} <span className="text-sm font-sans font-medium text-slate-400">TZS</span>
+                             </span>
+                             <span className="block text-[10px] uppercase text-slate-400 font-bold mt-2">Kutoka Ahadi: {calculateTotalPledged().toLocaleString()}</span>
+                        </>
+                    ) : (
+                        <>
+                            <span className="block text-xs uppercase text-slate-500 font-extrabold tracking-wider mb-1">Jumla Kuu</span>
+                            <span className="block text-3xl font-mono font-bold text-slate-900 leading-none">
+                                {calculateTotal().toLocaleString()} <span className="text-sm font-sans font-medium text-slate-400">TZS</span>
+                            </span>
+                        </>
+                    )}
                 </div>
             </div>
         </div>
@@ -287,13 +337,17 @@ const Reports: React.FC = () => {
               
               {/* Summary Text (Text-based only) - Hidden in Print (now in header) but visible on Screen */}
               <div className="mb-6 print:hidden flex flex-col gap-1">
-                   <p className="text-sm uppercase text-slate-500 font-bold tracking-wider">Jumla Kuu</p>
+                   <p className="text-sm uppercase text-slate-500 font-bold tracking-wider">
+                       {selectedReport === 'jengo' ? 'Jumla Imekusanywa' : 'Jumla Kuu'}
+                   </p>
                    <p className="text-3xl font-mono font-bold text-slate-900">{calculateTotal().toLocaleString()} TZS</p>
               </div>
 
               {/* Action Bar (Download) */}
               <div className="flex justify-between items-center mb-6 print:hidden">
-                  <h3 className="font-bold text-slate-700">Orodha ya Miamala ({reportData.length})</h3>
+                  <h3 className="font-bold text-slate-700">
+                      {selectedReport === 'jengo' ? `Hali ya Ahadi (${reportData.length})` : `Orodha ya Miamala (${reportData.length})`}
+                  </h3>
                   <button onClick={handlePrint} className="flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 font-bold text-sm transition-colors">
                       <Printer className="w-4 h-4 mr-2" /> Chapisha / PDF
                   </button>
@@ -304,29 +358,45 @@ const Reports: React.FC = () => {
                   <table className="w-full text-left text-sm">
                       <thead className="bg-slate-50 text-slate-900 font-bold uppercase text-xs print:bg-transparent print:border-b-2 print:border-black">
                           <tr>
-                              <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Tarehe</th>
+                              {selectedReport !== 'jengo' && (
+                                <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Tarehe</th>
+                              )}
                               
-                              {selectedReport === 'envelope' && <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Namba</th>}
+                              {(selectedReport === 'envelope' || selectedReport === 'jengo') && <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Namba</th>}
                               
-                              {/* Only show 'Maelezo / Jina' for Expense and Envelope reports */}
+                              {/* Only show 'Maelezo / Jina' for Expense, Envelope, Jengo reports */}
                               {selectedReport !== 'regular' && (
                                 <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Maelezo / Jina</th>
+                              )}
+
+                              {selectedReport === 'jengo' && (
+                                <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Jumuiya</th>
                               )}
                               
                               {selectedReport === 'envelope' && <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Aina</th>}
                               {selectedReport === 'regular' && <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Aina ya Ibada</th>}
                               
-                              <th className="px-6 py-4 border-b border-slate-200 print:border-black text-right">Kiasi (TZS)</th>
+                              {selectedReport === 'jengo' ? (
+                                  <>
+                                    <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black text-right">Ahadi</th>
+                                    <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black text-right">Imelipwa</th>
+                                    <th className="px-6 py-4 border-b border-slate-200 print:border-black text-right">Baki</th>
+                                  </>
+                              ) : (
+                                  <th className="px-6 py-4 border-b border-slate-200 print:border-black text-right">Kiasi (TZS)</th>
+                              )}
                           </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 print:divide-slate-300">
                           {reportData.map((item, idx) => (
-                              <tr key={item.id || idx} className="hover:bg-slate-50 print:hover:bg-transparent">
-                                  <td className="px-6 py-4 border-r border-slate-100 print:border-black">
-                                      {new Date(item.offering_date || item.service_date || item.expense_date).toLocaleDateString()}
-                                  </td>
+                              <tr key={item.id || item.envelope_number || idx} className="hover:bg-slate-50 print:hover:bg-transparent">
+                                  {selectedReport !== 'jengo' && (
+                                      <td className="px-6 py-4 border-r border-slate-100 print:border-black">
+                                          {new Date(item.offering_date || item.service_date || item.expense_date).toLocaleDateString()}
+                                      </td>
+                                  )}
                                   
-                                  {selectedReport === 'envelope' && (
+                                  {(selectedReport === 'envelope' || selectedReport === 'jengo') && (
                                       <td className="px-6 py-4 font-mono font-bold border-r border-slate-100 print:border-black">
                                           #{item.envelope_number}
                                       </td>
@@ -335,6 +405,12 @@ const Reports: React.FC = () => {
                                   {selectedReport !== 'regular' && (
                                       <td className="px-6 py-4 border-r border-slate-100 print:border-black">
                                           {item.description || item.donor_name || '-'}
+                                      </td>
+                                  )}
+
+                                  {selectedReport === 'jengo' && (
+                                      <td className="px-6 py-4 border-r border-slate-100 print:border-black">
+                                          {item.fellowship_name}
                                       </td>
                                   )}
                                   
@@ -353,9 +429,23 @@ const Reports: React.FC = () => {
                                       </td>
                                   )}
 
-                                  <td className="px-6 py-4 text-right font-mono font-bold text-lg text-slate-900 print:text-black print:border-black">
-                                      {item.amount.toLocaleString()}
-                                  </td>
+                                  {selectedReport === 'jengo' ? (
+                                      <>
+                                        <td className="px-6 py-4 text-right font-mono border-r border-slate-100 print:border-black">
+                                            {item.amount.toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-4 text-right font-mono font-bold text-emerald-700 border-r border-slate-100 print:border-black">
+                                            {item.paid_amount.toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-4 text-right font-mono text-rose-600 print:text-black">
+                                            {item.remaining_amount.toLocaleString()}
+                                        </td>
+                                      </>
+                                  ) : (
+                                    <td className="px-6 py-4 text-right font-mono font-bold text-lg text-slate-900 print:text-black print:border-black">
+                                        {item.amount.toLocaleString()}
+                                    </td>
+                                  )}
                               </tr>
                           ))}
                       </tbody>
@@ -365,7 +455,9 @@ const Reports: React.FC = () => {
               {/* Total Summary (Outside Table for Last Page Print - Bottom) */}
               <div className="flex justify-end mt-0 border-t border-slate-200 print:border-black">
                  <div className="flex items-center gap-8 px-6 py-6 border-l border-r border-b border-slate-200 bg-slate-50 print:bg-transparent print:border-black print:border-t-2 rounded-b-xl print:rounded-none">
-                     <span className="uppercase text-xs text-slate-500 print:text-black font-extrabold tracking-wider">Jumla Kuu</span>
+                     <span className="uppercase text-xs text-slate-500 print:text-black font-extrabold tracking-wider">
+                         {selectedReport === 'jengo' ? 'Jumla Imekusanywa' : 'Jumla Kuu'}
+                     </span>
                      <span className="font-mono text-2xl text-slate-900 print:text-black font-bold">{calculateTotal().toLocaleString()}</span>
                  </div>
               </div>

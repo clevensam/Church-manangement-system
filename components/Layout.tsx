@@ -51,7 +51,8 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
         id: 'jengo', 
         label: 'Michango ya Jengo', 
         icon: Building, 
-        allowedRoles: ['admin', 'jumuiya_leader'] 
+        // Restricted to Admin, Pastor, Accountant
+        allowedRoles: ['admin', 'pastor', 'accountant'] 
     },
     { 
       id: 'expenses', 

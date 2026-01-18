@@ -19,10 +19,17 @@ const JengoPledges = lazy(() => import('./components/JengoPledges'));
 
 // --- Access Control Configuration ---
 const ROLE_PERMISSIONS: Record<string, string[]> = {
+    // Admin: Access Everything
     'admin': ['dashboard', 'jengo', 'expenses', 'expenses-list', 'expenses-add', 'offerings', 'offerings-list', 'offerings-add', 'donors', 'donors-list', 'donors-add', 'reports', 'admin', 'profile'],
-    'accountant': ['dashboard', 'expenses', 'expenses-list', 'expenses-add', 'offerings', 'offerings-list', 'offerings-add', 'donors', 'donors-list', 'reports', 'profile'],
-    'jumuiya_leader': ['dashboard', 'jengo', 'offerings', 'offerings-list', 'offerings-add', 'donors', 'donors-list', 'donors-add', 'reports', 'profile'],
-    'pastor': ['dashboard', 'expenses', 'expenses-list', 'offerings', 'offerings-list', 'donors', 'donors-list', 'reports', 'profile']
+    
+    // Accountant: Access Jengo, Expenses, Offerings, Reports
+    'accountant': ['dashboard', 'jengo', 'expenses', 'expenses-list', 'expenses-add', 'offerings', 'offerings-list', 'offerings-add', 'donors', 'donors-list', 'reports', 'profile'],
+    
+    // Pastor: Access Jengo (View), Expenses (View), Offerings (View), Reports
+    'pastor': ['dashboard', 'jengo', 'expenses', 'expenses-list', 'offerings', 'offerings-list', 'donors', 'donors-list', 'reports', 'profile'],
+    
+    // Jumuiya Leader: Removed 'jengo' access
+    'jumuiya_leader': ['dashboard', 'offerings', 'offerings-list', 'offerings-add', 'donors', 'donors-list', 'donors-add', 'reports', 'profile'],
 };
 
 // --- Protected App Content ---
