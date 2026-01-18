@@ -17,7 +17,7 @@ const Donors: React.FC<DonorsProps> = ({ viewMode = 'list' }) => {
   const [search, setSearch] = useState('');
   
   // Permissions: "Viongozi can add users only" (interpreted as Donors)
-  const canManage = profile?.role === 'jumuiya_leader' || profile?.role === 'admin';
+  const canManage = profile?.role === 'mzee_wa_kanisa' || profile?.role === 'admin';
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState<Donor>({

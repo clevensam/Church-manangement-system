@@ -7,7 +7,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
-        CREATE TYPE public.user_role AS ENUM ('admin', 'pastor', 'accountant', 'jumuiya_leader');
+        CREATE TYPE public.user_role AS ENUM ('admin', 'pastor', 'accountant', 'mzee_wa_kanisa');
     END IF;
 END $$;
 
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS public.users (
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     full_name TEXT NOT NULL,
-    role public.user_role DEFAULT 'jumuiya_leader',
+    role public.user_role DEFAULT 'mzee_wa_kanisa',
     must_change_password BOOLEAN DEFAULT FALSE,
     last_sign_in_at TIMESTAMP WITH TIME ZONE
 );

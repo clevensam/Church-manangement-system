@@ -28,8 +28,8 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     // Pastor: Access Jengo (View), Expenses (View), Offerings (View), Reports
     'pastor': ['dashboard', 'jengo', 'expenses', 'expenses-list', 'offerings', 'offerings-list', 'donors', 'donors-list', 'reports', 'profile'],
     
-    // Jumuiya Leader: Removed 'jengo' access
-    'jumuiya_leader': ['dashboard', 'offerings', 'offerings-list', 'offerings-add', 'donors', 'donors-list', 'donors-add', 'reports', 'profile'],
+    // Mzee wa Kanisa: Removed 'jengo' access
+    'mzee_wa_kanisa': ['dashboard', 'offerings', 'offerings-list', 'offerings-add', 'donors', 'donors-list', 'donors-add', 'reports', 'profile'],
 };
 
 // --- Protected App Content ---

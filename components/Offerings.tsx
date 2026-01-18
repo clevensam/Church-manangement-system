@@ -13,12 +13,12 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
   const { profile } = useAuth();
   
   // Specific role check for view restriction
-  const isJumuiyaLeader = profile?.role === 'jumuiya_leader';
+  const isMzeeWaKanisa = profile?.role === 'mzee_wa_kanisa';
   const isAccountant = profile?.role === 'accountant';
 
   // If leader, default to 'envelope', else 'regular'
   const [activeTab, setActiveTab] = useState<'regular' | 'envelope'>(
-      isJumuiyaLeader ? 'envelope' : 'regular'
+      isMzeeWaKanisa ? 'envelope' : 'regular'
   );
 
   const [regularOfferings, setRegularOfferings] = useState<RegularOffering[]>([]);
@@ -27,7 +27,7 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
   
   // Permissions
   const canManageRegular = profile?.role === 'accountant' || profile?.role === 'admin';
-  const canManageEnvelope = profile?.role === 'jumuiya_leader' || profile?.role === 'admin';
+  const canManageEnvelope = profile?.role === 'mzee_wa_kanisa' || profile?.role === 'admin';
   
   // Data for Lookups
   const [allDonors, setAllDonors] = useState<Donor[]>([]);
@@ -70,7 +70,7 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
 
   useEffect(() => {
     // Force activeTab on mount/change if leader (safeguard)
-    if (isJumuiyaLeader && activeTab !== 'envelope') {
+    if (isMzeeWaKanisa && activeTab !== 'envelope') {
         setActiveTab('envelope');
         return;
     }
@@ -87,7 +87,7 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
     }
     // Load donors once for lookup efficiency
     api.donors.getAll().then(setAllDonors).catch(console.error);
-  }, [activeTab, viewMode, isJumuiyaLeader, isAccountant]);
+  }, [activeTab, viewMode, isMzeeWaKanisa, isAccountant]);
 
   const loadData = async () => {
     setLoading(true);
@@ -370,8 +370,8 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
             
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
                 {/* Internal Tabs for the Form */}
-                {/* HIDDEN for Jumuiya Leader AND Accountant */}
-                {!isJumuiyaLeader && !isAccountant && (
+                {/* HIDDEN for Mzee Wa Kanisa AND Accountant */}
+                {!isMzeeWaKanisa && !isAccountant && (
                     <div className="flex space-x-2 bg-slate-50 p-1 rounded-xl mb-6">
                         <button
                             onClick={() => setActiveTab('regular')}
@@ -417,8 +417,8 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
       <div className="flex flex-col gap-4">
           <h1 className="text-xl lg:text-2xl font-bold text-slate-900">Sadaka</h1>
           
-          {/* Tab Switcher - HIDDEN for Jumuiya Leader AND Accountant */}
-          {!isJumuiyaLeader && !isAccountant && (
+          {/* Tab Switcher - HIDDEN for Mzee Wa Kanisa AND Accountant */}
+          {!isMzeeWaKanisa && !isAccountant && (
               <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm w-full sm:w-fit self-start">
                 <button onClick={() => setActiveTab('regular')} className={`flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'regular' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Ibada</button>
                 <button onClick={() => setActiveTab('envelope')} className={`flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'envelope' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Bahasha</button>

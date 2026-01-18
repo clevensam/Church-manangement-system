@@ -1,6 +1,6 @@
 // Defined based on Section 7 of SDD and API Documentation
 
-export type UserRole = 'admin' | 'pastor' | 'accountant' | 'jumuiya_leader';
+export type UserRole = 'admin' | 'pastor' | 'accountant' | 'mzee_wa_kanisa';
 
 export interface User {
   id: string;

@@ -3,7 +3,7 @@
 INSERT INTO public.users (id, email, password_hash, full_name, role, must_change_password) VALUES
 ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a01', 'admin@kanisa.or.tz', crypt('admin123', gen_salt('bf')), 'System Admin', 'admin', FALSE),
 ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a02', 'mhasibu@kanisa.or.tz', crypt('admin123', gen_salt('bf')), 'Mhasibu Mkuu', 'accountant', FALSE),
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a03', 'kiongozi@kanisa.or.tz', crypt('admin123', gen_salt('bf')), 'Kiongozi Jumuiya', 'jumuiya_leader', FALSE),
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a03', 'kiongozi@kanisa.or.tz', crypt('admin123', gen_salt('bf')), 'Mzee wa Kanisa', 'mzee_wa_kanisa', FALSE),
 ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a04', 'mchungaji@kanisa.or.tz', crypt('admin123', gen_salt('bf')), 'Mchungaji Kiongozi', 'pastor', FALSE)
 ON CONFLICT (email) DO NOTHING;
 

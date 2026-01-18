@@ -44,7 +44,7 @@ const Profile: React.FC = () => {
             case 'admin': return 'Msimamizi Mkuu';
             case 'pastor': return 'Mchungaji';
             case 'accountant': return 'Mhasibu';
-            case 'jumuiya_leader': return 'Kiongozi wa Jumuiya';
+            case 'mzee_wa_kanisa': return 'Mzee wa Kanisa';
             default: return role;
         }
     };

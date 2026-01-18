@@ -31,7 +31,7 @@ const Reports: React.FC = () => {
     if (!profile) return;
     
     // Default tabs based on role
-    if (profile.role === 'jumuiya_leader') setSelectedReport('envelope');
+    if (profile.role === 'mzee_wa_kanisa') setSelectedReport('envelope');
     else if (profile.role === 'accountant') setSelectedReport('regular');
     
     // Load Fellowships for filters
@@ -49,7 +49,7 @@ const Reports: React.FC = () => {
   // Determine Available Reports
   const availableReports: {id: ReportType, label: string}[] = [];
   
-  if (['admin', 'pastor', 'jumuiya_leader'].includes(profile?.role || '')) {
+  if (['admin', 'pastor', 'mzee_wa_kanisa'].includes(profile?.role || '')) {
       availableReports.push({ id: 'envelope', label: 'Sadaka za Bahasha' });
   }
   

@@ -45,7 +45,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
         id: 'dashboard', 
         label: 'Dashibodi', 
         icon: LayoutDashboard,
-        allowedRoles: ['admin', 'pastor', 'accountant', 'jumuiya_leader']
+        allowedRoles: ['admin', 'pastor', 'accountant', 'mzee_wa_kanisa']
     },
     { 
         id: 'jengo', 
@@ -68,7 +68,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
       id: 'offerings', 
       label: 'Sadaka', 
       icon: Wallet,
-      allowedRoles: ['admin', 'pastor', 'accountant', 'jumuiya_leader'],
+      allowedRoles: ['admin', 'pastor', 'accountant', 'mzee_wa_kanisa'],
       subItems: [
         { id: 'offerings-list', label: 'Orodha', icon: List },
         { id: 'offerings-add', label: 'Rekodi Mpya', icon: PlusCircle },
@@ -78,7 +78,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
       id: 'donors', 
       label: 'Wahumini', 
       icon: Users,
-      allowedRoles: ['admin', 'pastor', 'accountant', 'jumuiya_leader'],
+      allowedRoles: ['admin', 'pastor', 'accountant', 'mzee_wa_kanisa'],
       subItems: [
         { id: 'donors-list', label: 'Orodha', icon: List },
         { id: 'donors-add', label: 'Sajili Mhumini', icon: PlusCircle },
@@ -88,7 +88,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
         id: 'reports', 
         label: 'Ripoti', 
         icon: FileText,
-        allowedRoles: ['admin', 'pastor', 'accountant', 'jumuiya_leader']
+        allowedRoles: ['admin', 'pastor', 'accountant', 'mzee_wa_kanisa']
     },
     { 
         id: 'admin', 
@@ -100,8 +100,8 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
 
   // Specific Logic to hide "Add/Record" sub-items for read-only roles
   const canAddExpenses = ['admin', 'accountant'].includes(profile?.role || '');
-  const canAddOfferings = ['admin', 'accountant', 'jumuiya_leader'].includes(profile?.role || '');
-  const canAddDonors = ['admin', 'jumuiya_leader'].includes(profile?.role || '');
+  const canAddOfferings = ['admin', 'accountant', 'mzee_wa_kanisa'].includes(profile?.role || '');
+  const canAddDonors = ['admin', 'mzee_wa_kanisa'].includes(profile?.role || '');
 
   const filteredNavItems = allNavItems.filter(item => {
       // 1. Check parent role access
@@ -137,6 +137,16 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
 
   const activeParentId = getActiveParentId();
   const activeItemLabel = filteredNavItems.flatMap(i => [i, ...(i.subItems || [])]).find(i => i.id === activeTab)?.label || 'Wasifu';
+
+  const formatRole = (role?: string) => {
+      switch(role) {
+          case 'mzee_wa_kanisa': return 'Mzee wa Kanisa';
+          case 'admin': return 'Admin';
+          case 'accountant': return 'Mhasibu';
+          case 'pastor': return 'Mchungaji';
+          default: return role;
+      }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900 pb-20 lg:pb-0">
@@ -351,7 +361,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
                                 {profile?.full_name?.split(' ')[0]}
                             </span>
                             <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md leading-none uppercase hidden sm:block">
-                                {profile?.role}
+                                {formatRole(profile?.role)}
                             </span>
                         </div>
                     </button>
