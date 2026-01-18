@@ -224,6 +224,12 @@ const Reports: React.FC = () => {
           );
       }
 
+      // Calculate ColSpan dynamically based on report type
+      // Envelope: Date, Number, Name, Type, Amount (5 cols) -> Span 4
+      // Regular: Date, Name/Desc, Type, Amount (4 cols) -> Span 3
+      // Expense: Date, Desc, Amount (3 cols) -> Span 2
+      const footerColSpan = selectedReport === 'envelope' ? 4 : (selectedReport === 'regular' ? 3 : 2);
+
       return (
           <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               
@@ -249,7 +255,7 @@ const Reports: React.FC = () => {
                               <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Tarehe</th>
                               {selectedReport === 'envelope' && <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Namba</th>}
                               <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Maelezo / Jina</th>
-                              {selectedReport === 'envelope' && <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Jumuiya</th>}
+                              {/* Removed Jumuiya Column Header */}
                               {selectedReport === 'envelope' && <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Aina</th>}
                               {selectedReport === 'regular' && <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Aina ya Ibada</th>}
                               <th className="px-6 py-4 border-b border-slate-200 print:border-black text-right">Kiasi (TZS)</th>
@@ -271,12 +277,8 @@ const Reports: React.FC = () => {
                                   <td className="px-6 py-4 border-r border-slate-100 print:border-black">
                                       {item.description || item.donor_name || '-'}
                                   </td>
-
-                                  {selectedReport === 'envelope' && (
-                                      <td className="px-6 py-4 border-r border-slate-100 print:border-black text-xs uppercase">
-                                          {item.fellowship_name}
-                                      </td>
-                                  )}
+                                  
+                                  {/* Removed Jumuiya Data Cell */}
                                   
                                   {selectedReport === 'envelope' && (
                                       <td className="px-6 py-4 border-r border-slate-100 print:border-black">
@@ -293,7 +295,7 @@ const Reports: React.FC = () => {
                                       </td>
                                   )}
 
-                                  <td className="px-6 py-4 text-right font-mono font-medium print:border-black">
+                                  <td className="px-6 py-4 text-right font-mono font-bold text-lg text-slate-900 print:text-black print:border-black">
                                       {item.amount.toLocaleString()}
                                   </td>
                               </tr>
@@ -301,8 +303,8 @@ const Reports: React.FC = () => {
                       </tbody>
                       <tfoot className="bg-slate-50 font-bold border-t border-slate-200 print:bg-transparent print:border-t-2 print:border-black">
                           <tr>
-                             <td colSpan={selectedReport === 'envelope' ? 5 : 2} className="px-6 py-4 text-right uppercase text-xs text-slate-500 print:text-black border-r border-slate-200 print:border-black">Jumla Kuu</td>
-                             <td className="px-6 py-4 text-right font-mono text-slate-900 print:text-black">{calculateTotal().toLocaleString()}</td>
+                             <td colSpan={footerColSpan} className="px-6 py-4 text-right uppercase text-xs text-slate-500 print:text-black border-r border-slate-200 print:border-black">Jumla Kuu</td>
+                             <td className="px-6 py-4 text-right font-mono text-xl text-slate-900 print:text-black">{calculateTotal().toLocaleString()}</td>
                           </tr>
                       </tfoot>
                   </table>
