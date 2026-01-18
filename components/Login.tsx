@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Banknote, Loader2, AlertCircle, Eye, EyeOff, Info } from 'lucide-react';
+import { Banknote, AlertCircle, Eye, EyeOff, Info } from 'lucide-react';
 
 const Login: React.FC = () => {
   const { login } = useAuth();
@@ -51,9 +51,8 @@ const Login: React.FC = () => {
       // AuthProvider updates state, App.tsx renders content
     } catch (err: any) {
       console.error(err);
-      setGlobalError(err.message || 'Hitilafu imetokea. Hakikisha baruapepe na nenosiri ni sahihi.');
-      // UX: Clear password to force retry, but KEEP email to allow correction
-      setPassword(''); 
+      setGlobalError('Baruapepe au nenosiri siyo sahihi. Tafadhali jaribu tena.');
+      // UX: Input retained (password not cleared) to allow user to fix typos
     } finally {
       setLoading(false);
     }
@@ -149,14 +148,7 @@ const Login: React.FC = () => {
                     disabled={loading}
                     className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-lg shadow-slate-900/10 flex items-center justify-center transition-all disabled:opacity-70 disabled:cursor-not-allowed mt-4"
                 >
-                    {loading ? (
-                        <>
-                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                            Inahakiki...
-                        </>
-                    ) : (
-                        'Ingia'
-                    )}
+                    Ingia
                 </button>
             </form>
 
