@@ -20,9 +20,19 @@ const Login: React.FC = () => {
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Hitilafu imetokea. Hakikisha baruapepe na nenosiri ni sahihi.');
+      // UX: Clear password to force retry, but KEEP email to allow correction
+      setPassword(''); 
     } finally {
       setLoading(false);
     }
+  };
+
+  const getInputClass = (isError: boolean) => {
+      return `w-full px-4 py-3 border rounded-xl outline-none focus:ring-2 transition-all ${
+          isError 
+            ? 'bg-rose-50 border-rose-300 text-rose-900 placeholder:text-rose-300 focus:ring-rose-200' 
+            : 'bg-slate-50 border-slate-200 focus:ring-emerald-500 focus:bg-white'
+      }`;
   };
 
   return (
@@ -42,8 +52,8 @@ const Login: React.FC = () => {
             <h2 className="text-lg font-bold text-slate-800 mb-6 text-center">Ingia kwenye Mfumo</h2>
             
             {error && (
-                <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-3 text-rose-700 text-sm">
-                    <AlertCircle className="w-5 h-5 shrink-0" />
+                <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-3 text-rose-700 text-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                    <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                     <span>{error}</span>
                 </div>
             )}
@@ -54,10 +64,13 @@ const Login: React.FC = () => {
                     <input 
                         type="email" 
                         required
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                        className={getInputClass(!!error)}
                         placeholder="mfano@kanisa.or.tz"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => {
+                            setEmail(e.target.value);
+                            if (error) setError(null); // Clear error when user starts typing again
+                        }}
                     />
                 </div>
                 <div>
@@ -65,10 +78,13 @@ const Login: React.FC = () => {
                     <input 
                         type="password" 
                         required
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
+                        className={getInputClass(!!error)}
                         placeholder="••••••••"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => {
+                            setPassword(e.target.value);
+                            if (error) setError(null); // Clear error when user starts typing again
+                        }}
                     />
                 </div>
 
