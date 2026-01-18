@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Banknote, Loader2, AlertCircle } from 'lucide-react';
+import { Banknote, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const Login: React.FC = () => {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,23 +70,34 @@ const Login: React.FC = () => {
                         value={email}
                         onChange={(e) => {
                             setEmail(e.target.value);
-                            if (error) setError(null); // Clear error when user starts typing again
+                            if (error) setError(null);
                         }}
                     />
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Nenosiri</label>
-                    <input 
-                        type="password" 
-                        required
-                        className={getInputClass(!!error)}
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => {
-                            setPassword(e.target.value);
-                            if (error) setError(null); // Clear error when user starts typing again
-                        }}
-                    />
+                    <div className="relative">
+                        <input 
+                            type={showPassword ? "text" : "password"} 
+                            required
+                            className={`${getInputClass(!!error)} pr-12`}
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => {
+                                setPassword(e.target.value);
+                                if (error) setError(null);
+                            }}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"
+                            tabIndex={-1}
+                            aria-label={showPassword ? "Ficha nenosiri" : "Onyesha nenosiri"}
+                        >
+                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                    </div>
                 </div>
 
                 <button 
