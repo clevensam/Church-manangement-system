@@ -14,9 +14,6 @@ import {
   ChevronDown,
   List,
   PlusCircle,
-  Bell,
-  Settings,
-  User,
   ShieldCheck 
 } from 'lucide-react';
 
@@ -40,7 +37,6 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
   const { profile, signOut } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   // Define Navigation Structure with RBAC
   const allNavItems: NavItem[] = [
@@ -295,12 +291,23 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
             bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm
         ">
             <div className="flex flex-col justify-center">
-                <h2 className="text-xl font-bold text-slate-800 capitalize tracking-tight flex items-center gap-2">
-                    {activeItemLabel}
-                </h2>
-                <p className="text-xs text-slate-500 hidden sm:block">
-                    {new Date().toLocaleDateString('sw-TZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                </p>
+                {/* Mobile: Brand Name "KanisaLetu" */}
+                <div className="lg:hidden flex items-center gap-2">
+                    <div className="bg-emerald-600 p-1.5 rounded-lg shadow-sm">
+                        <Banknote className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="text-xl font-bold text-slate-900 tracking-tight">KanisaLetu</span>
+                </div>
+
+                {/* Desktop: Page Title */}
+                <div className="hidden lg:block">
+                    <h2 className="text-xl font-bold text-slate-800 capitalize tracking-tight flex items-center gap-2">
+                        {activeItemLabel}
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                        {new Date().toLocaleDateString('sw-TZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                </div>
             </div>
 
             <div className="flex items-center gap-3 lg:gap-6">
@@ -321,60 +328,34 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
                 )}
                 
                 {/* Actions & Profile */}
-                <div className="flex items-center gap-2 lg:gap-4 pl-4 border-l border-slate-200">
-                    <button className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-all relative">
-                        <Bell className="w-5 h-5" />
-                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
-                    </button>
+                <div className="flex items-center gap-3 lg:gap-4 pl-4 border-l border-slate-200">
                     
-                    {/* Profile Dropdown Trigger */}
-                    <div className="relative">
-                        <button 
-                            onClick={() => setShowProfileMenu(!showProfileMenu)}
-                            className="flex items-center gap-3 p-1.5 pr-3 rounded-full hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200 group"
-                        >
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md ring-2 ring-white uppercase">
-                                {profile?.full_name?.charAt(0) || 'U'}
-                            </div>
-                            <div className="hidden lg:flex flex-col items-start">
-                                <span className="text-sm font-bold text-slate-700 group-hover:text-slate-900 leading-none mb-1">{profile?.full_name || 'Mtumiaji'}</span>
-                                <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md leading-none uppercase">{profile?.role}</span>
-                            </div>
-                            <ChevronDown className="w-4 h-4 text-slate-400 hidden lg:block" />
-                        </button>
+                    {/* Profile Section (Icon + Name) */}
+                    <button 
+                        onClick={() => onNavigate('profile')}
+                        className="flex items-center gap-2 group p-1.5 rounded-full hover:bg-slate-50 transition-colors"
+                    >
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md ring-2 ring-white uppercase">
+                            {profile?.full_name?.charAt(0) || 'U'}
+                        </div>
+                        <div className="flex flex-col items-start">
+                            <span className="text-sm font-bold text-slate-700 group-hover:text-slate-900 leading-none mb-1 max-w-[100px] sm:max-w-none truncate">
+                                {profile?.full_name?.split(' ')[0]}
+                            </span>
+                            <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md leading-none uppercase hidden sm:block">
+                                {profile?.role}
+                            </span>
+                        </div>
+                    </button>
 
-                        {/* Dropdown Menu */}
-                        {showProfileMenu && (
-                            <>
-                                <div 
-                                    className="fixed inset-0 z-30 cursor-default" 
-                                    onClick={() => setShowProfileMenu(false)}
-                                />
-                                <div className="absolute right-0 top-14 w-56 bg-white rounded-xl shadow-2xl border border-slate-100 p-2 z-40 animate-in slide-in-from-top-2 duration-200">
-                                    <div className="lg:hidden px-3 py-2 border-b border-slate-100 mb-2">
-                                        <p className="font-bold text-slate-800">{profile?.full_name}</p>
-                                        <p className="text-xs text-slate-500 uppercase">{profile?.role}</p>
-                                    </div>
-                                    <button 
-                                        onClick={() => { onNavigate('profile'); setShowProfileMenu(false); }}
-                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors"
-                                    >
-                                        <User className="w-4 h-4" /> Wasifu Wangu
-                                    </button>
-                                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors">
-                                        <Settings className="w-4 h-4" /> Mipangilio
-                                    </button>
-                                    <div className="h-px bg-slate-100 my-1"></div>
-                                    <button 
-                                      onClick={signOut}
-                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                                    >
-                                        <LogOut className="w-4 h-4" /> Ondoka
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    {/* Logout Button (Direct) */}
+                    <button 
+                        onClick={signOut}
+                        className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-full transition-all border border-transparent hover:border-rose-100"
+                        title="Ondoka"
+                    >
+                        <LogOut className="w-5 h-5" />
+                    </button>
                 </div>
             </div>
         </header>
