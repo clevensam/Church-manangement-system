@@ -14,6 +14,7 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
   
   // Specific role check for view restriction
   const isJumuiyaLeader = profile?.role === 'jumuiya_leader';
+  const isAccountant = profile?.role === 'accountant';
 
   // If leader, default to 'envelope', else 'regular'
   const [activeTab, setActiveTab] = useState<'regular' | 'envelope'>(
@@ -72,6 +73,11 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
         setActiveTab('envelope');
         return;
     }
+    // Force activeTab if accountant (safeguard)
+    if (isAccountant && activeTab !== 'regular') {
+        setActiveTab('regular');
+        return;
+    }
 
     if (viewMode === 'list') {
         loadData();
@@ -80,7 +86,7 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
     }
     // Load donors once for lookup efficiency
     api.donors.getAll().then(setAllDonors).catch(console.error);
-  }, [activeTab, viewMode, isJumuiyaLeader]);
+  }, [activeTab, viewMode, isJumuiyaLeader, isAccountant]);
 
   const loadData = async () => {
     setLoading(true);
@@ -342,8 +348,8 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
             
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
                 {/* Internal Tabs for the Form */}
-                {/* HIDDEN for Jumuiya Leader */}
-                {!isJumuiyaLeader && (
+                {/* HIDDEN for Jumuiya Leader AND Accountant */}
+                {!isJumuiyaLeader && !isAccountant && (
                     <div className="flex space-x-2 bg-slate-50 p-1 rounded-xl mb-6">
                         <button
                             onClick={() => setActiveTab('regular')}
@@ -389,8 +395,8 @@ const Offerings: React.FC<OfferingsProps> = ({ viewMode = 'list' }) => {
       <div className="flex flex-col gap-4">
           <h1 className="text-xl lg:text-2xl font-bold text-slate-900">Sadaka</h1>
           
-          {/* Tab Switcher - HIDDEN for Jumuiya Leader */}
-          {!isJumuiyaLeader && (
+          {/* Tab Switcher - HIDDEN for Jumuiya Leader AND Accountant */}
+          {!isJumuiyaLeader && !isAccountant && (
               <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm w-full sm:w-fit self-start">
                 <button onClick={() => setActiveTab('regular')} className={`flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'regular' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Ibada</button>
                 <button onClick={() => setActiveTab('envelope')} className={`flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === 'envelope' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Bahasha</button>
