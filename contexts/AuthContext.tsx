@@ -31,14 +31,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, pass: string) => {
-      setLoading(true);
-      try {
-          const user = await api.auth.login(email, pass);
-          setProfile(user);
-          localStorage.setItem('kanisa_user', JSON.stringify(user));
-      } finally {
-          setLoading(false);
-      }
+      // Do not set global loading(true) here. 
+      // It causes App.tsx to unmount the Login component, losing form state and error messages.
+      // The Login component handles its own loading UI.
+      const user = await api.auth.login(email, pass);
+      setProfile(user);
+      localStorage.setItem('kanisa_user', JSON.stringify(user));
   };
 
   const signOut = async () => {
