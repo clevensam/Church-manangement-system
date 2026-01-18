@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/supabaseService';
-import { JengoPledge, Fellowship } from '../types';
-import { Search, Filter, Edit2, TrendingUp, AlertCircle, Save, X, Coins } from 'lucide-react';
+import { JengoPledge, Fellowship, EnvelopeOffering } from '../types';
+import { Search, Edit2, Save, X, Coins, Eye, Calendar, FileText } from 'lucide-react';
 import LoadingCross from './LoadingCross';
 
 const JengoPledges: React.FC = () => {
@@ -13,11 +13,17 @@ const JengoPledges: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFellowship, setSelectedFellowship] = useState<string>('all');
   
-  // Modal
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Edit Modal
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingPledge, setEditingPledge] = useState<JengoPledge | null>(null);
   const [pledgeAmount, setPledgeAmount] = useState<string>('');
   const [saving, setSaving] = useState(false);
+
+  // History Modal
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [selectedHistoryPledge, setSelectedHistoryPledge] = useState<JengoPledge | null>(null);
+  const [historyData, setHistoryData] = useState<EnvelopeOffering[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -42,7 +48,21 @@ const JengoPledges: React.FC = () => {
   const handleEdit = (pledge: JengoPledge) => {
       setEditingPledge(pledge);
       setPledgeAmount(pledge.amount.toString());
-      setIsModalOpen(true);
+      setIsEditModalOpen(true);
+  };
+
+  const handleViewHistory = async (pledge: JengoPledge) => {
+      setSelectedHistoryPledge(pledge);
+      setIsHistoryModalOpen(true);
+      setLoadingHistory(true);
+      try {
+          const data = await api.jengo.getDonorHistory(pledge.envelope_number);
+          setHistoryData(data);
+      } catch (e) {
+          console.error(e);
+      } finally {
+          setLoadingHistory(false);
+      }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -53,7 +73,7 @@ const JengoPledges: React.FC = () => {
       try {
           await api.jengo.upsertPledge(editingPledge.envelope_number, parseFloat(pledgeAmount));
           await loadData(); // Reload to recalculate
-          setIsModalOpen(false);
+          setIsEditModalOpen(false);
       } catch (e) {
           alert('Hitilafu wakati wa kuhifadhi ahadi.');
       } finally {
@@ -172,13 +192,20 @@ const JengoPledges: React.FC = () => {
                                         </div>
                                     )}
                                 </td>
-                                <td className="px-6 py-4 text-center">
+                                <td className="px-6 py-4 text-center flex items-center justify-center gap-2">
                                     <button 
                                         onClick={() => handleEdit(row)}
                                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all"
                                         title="Badili Ahadi"
                                     >
                                         <Edit2 className="w-4 h-4" />
+                                    </button>
+                                    <button 
+                                        onClick={() => handleViewHistory(row)}
+                                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all"
+                                        title="Ona Historia ya Michango"
+                                    >
+                                        <Eye className="w-4 h-4" />
                                     </button>
                                 </td>
                             </tr>
@@ -190,12 +217,12 @@ const JengoPledges: React.FC = () => {
       </div>
 
       {/* Edit Pledge Modal */}
-      {isModalOpen && editingPledge && (
+      {isEditModalOpen && editingPledge && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
               <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm animate-in zoom-in duration-200">
                   <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                       <h3 className="font-bold text-slate-900">Weka Ahadi ya Jengo</h3>
-                      <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
+                      <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
                   </div>
                   <form onSubmit={handleSave} className="p-6">
                       <div className="mb-4">
@@ -220,6 +247,65 @@ const JengoPledges: React.FC = () => {
                           {saving ? <LoadingCross /> : <><Save className="w-4 h-4 mr-2" /> Hifadhi Ahadi</>}
                       </button>
                   </form>
+              </div>
+          </div>
+      )}
+
+      {/* History Modal */}
+      {isHistoryModalOpen && selectedHistoryPledge && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg animate-in zoom-in duration-200 flex flex-col max-h-[90vh]">
+                  <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                      <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                        <FileText className="w-4 h-4" /> Historia ya Michango
+                      </h3>
+                      <button onClick={() => setIsHistoryModalOpen(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
+                  </div>
+                  
+                  <div className="p-6 border-b border-slate-100">
+                      <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-bold text-lg text-slate-900">{selectedHistoryPledge.donor_name}</p>
+                            <p className="text-sm text-slate-500 font-mono">#{selectedHistoryPledge.envelope_number} • {selectedHistoryPledge.fellowship_name}</p>
+                          </div>
+                          <div className="text-right">
+                             <p className="text-xs uppercase text-slate-400 font-bold">Imelipwa Jumla</p>
+                             <p className="text-xl font-mono font-bold text-emerald-600">{(selectedHistoryPledge.paid_amount || 0).toLocaleString()} TZS</p>
+                          </div>
+                      </div>
+                  </div>
+
+                  <div className="overflow-y-auto flex-1 p-0 custom-scrollbar">
+                      {loadingHistory ? (
+                          <div className="p-8"><LoadingCross /></div>
+                      ) : historyData.length === 0 ? (
+                          <div className="p-10 text-center text-slate-500">
+                              Hakuna michango ya jengo iliyorekodiwa bado.
+                          </div>
+                      ) : (
+                          <table className="w-full text-sm text-left">
+                              <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs sticky top-0">
+                                  <tr>
+                                      <th className="px-6 py-3 border-b">Tarehe</th>
+                                      <th className="px-6 py-3 border-b text-right">Kiasi (TZS)</th>
+                                  </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100">
+                                  {historyData.map((item, idx) => (
+                                      <tr key={idx} className="hover:bg-slate-50">
+                                          <td className="px-6 py-3 flex items-center gap-2">
+                                              <Calendar className="w-3 h-3 text-slate-400" />
+                                              {new Date(item.offering_date).toLocaleDateString()}
+                                          </td>
+                                          <td className="px-6 py-3 text-right font-mono font-medium">
+                                              {item.amount.toLocaleString()}
+                                          </td>
+                                      </tr>
+                                  ))}
+                              </tbody>
+                          </table>
+                      )}
+                  </div>
               </div>
           </div>
       )}

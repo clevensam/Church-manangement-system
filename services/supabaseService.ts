@@ -300,6 +300,17 @@ export const api = {
             .select();
             
           if (error) throw error;
+      },
+      getDonorHistory: async (envelopeNumber: string): Promise<EnvelopeOffering[]> => {
+          const { data, error } = await supabase
+            .from('envelope_offerings')
+            .select('*')
+            .eq('envelope_number', envelopeNumber)
+            .eq('bahasha_type', 'Jengo')
+            .order('offering_date', { ascending: false });
+            
+          if (error) throw error;
+          return data || [];
       }
   },
 
