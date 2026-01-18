@@ -54,7 +54,8 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
       id: 'expenses', 
       label: 'Matumizi', 
       icon: CreditCard,
-      allowedRoles: ['admin', 'pastor', 'accountant', 'jumuiya_leader'],
+      // UPDATED: Removed 'jumuiya_leader' from allowedRoles
+      allowedRoles: ['admin', 'pastor', 'accountant'],
       subItems: [
         { id: 'expenses-list', label: 'Orodha', icon: List },
         { id: 'expenses-add', label: 'Rekodi Mpya', icon: PlusCircle }, // Permission checked inside Layout logic below

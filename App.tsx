@@ -49,7 +49,8 @@ const ReportsPlaceholder = () => (
 const ROLE_PERMISSIONS: Record<string, string[]> = {
     'admin': ['dashboard', 'expenses', 'expenses-list', 'expenses-add', 'offerings', 'offerings-list', 'offerings-add', 'donors', 'donors-list', 'donors-add', 'reports', 'admin', 'profile'],
     'accountant': ['dashboard', 'expenses', 'expenses-list', 'expenses-add', 'offerings', 'offerings-list', 'offerings-add', 'donors', 'donors-list', 'reports', 'profile'],
-    'jumuiya_leader': ['dashboard', 'expenses', 'expenses-list', 'offerings', 'offerings-list', 'offerings-add', 'donors', 'donors-list', 'donors-add', 'reports', 'profile'],
+    // UPDATED: Removed expenses access for jumuiya_leader
+    'jumuiya_leader': ['dashboard', 'offerings', 'offerings-list', 'offerings-add', 'donors', 'donors-list', 'donors-add', 'reports', 'profile'],
     'pastor': ['dashboard', 'expenses', 'expenses-list', 'offerings', 'offerings-list', 'donors', 'donors-list', 'reports', 'profile']
 };
 
