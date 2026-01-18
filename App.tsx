@@ -14,36 +14,7 @@ const Offerings = lazy(() => import('./components/Offerings'));
 const Donors = lazy(() => import('./components/Donors'));
 const AdminUsers = lazy(() => import('./components/AdminUsers'));
 const Profile = lazy(() => import('./components/Profile'));
-
-// --- Placeholder for Reports ---
-const ReportsPlaceholder = () => (
-  <div className="space-y-6">
-    <h1 className="text-2xl font-bold text-slate-900">Ripoti</h1>
-    <div className="bg-white p-8 rounded-xl border border-slate-200 text-center">
-      <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-      <h2 className="text-lg font-medium text-slate-900 mb-2">Zalisha Ripoti za Fedha</h2>
-      <p className="text-slate-500 max-w-md mx-auto mb-6">
-        Chagua aina ya ripoti hapa chini ili kupata nakala ya PDF ya taarifa za fedha.
-      </p>
-      <div className="flex flex-wrap justify-center gap-4">
-        <button className="flex items-center px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800" onClick={() => window.print()}>
-            <Download className="w-4 h-4 mr-2" /> Taarifa ya Mapato (PDF)
-        </button>
-        <button className="flex items-center px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50" onClick={() => window.print()}>
-            <Download className="w-4 h-4 mr-2" /> Ripoti ya Matumizi (PDF)
-        </button>
-      </div>
-    </div>
-    
-    <div className="hidden print:block p-4">
-        <h1 className="text-2xl font-bold mb-4">Ripoti ya Fedha ya Kanisa</h1>
-        <p>Imetolewa tarehe: {new Date().toLocaleDateString()}</p>
-        <div className="mt-4 border-t pt-4">
-            <p className="text-center italic">Maelezo ya ripoti yataonekana hapa wakati wa kuchapisha.</p>
-        </div>
-    </div>
-  </div>
-);
+const Reports = lazy(() => import('./components/Reports'));
 
 // --- Access Control Configuration ---
 const ROLE_PERMISSIONS: Record<string, string[]> = {
@@ -139,7 +110,7 @@ const AppContent = () => {
             case 'donors-list': return <Donors viewMode="list" />;
             case 'donors-add': return <Donors viewMode="add" />;
             
-            case 'reports': return <ReportsPlaceholder />;
+            case 'reports': return <Reports />;
             
             case 'admin': return <AdminUsers />;
             

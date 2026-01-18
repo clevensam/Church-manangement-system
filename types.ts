@@ -57,6 +57,7 @@ export interface EnvelopeOffering {
   bahasha_type: 'Ahadi' | 'Jengo' | string; // New Field
   // Optional expanded field for UI convenience if joining tables
   donor_name?: string; 
+  fellowship_name?: string;
 }
 
 export interface FinancialSummary {

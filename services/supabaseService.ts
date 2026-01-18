@@ -198,7 +198,10 @@ export const api = {
         .select(`
             *,
             donors (
-                donor_name
+                donor_name,
+                fellowships (
+                    name
+                )
             )
         `)
         .order('offering_date', { ascending: false });
@@ -211,7 +214,8 @@ export const api = {
         amount: item.amount,
         offering_date: item.offering_date,
         bahasha_type: item.bahasha_type,
-        donor_name: item.donors?.donor_name || 'Haijulikani'
+        donor_name: item.donors?.donor_name || 'Haijulikani',
+        fellowship_name: item.donors?.fellowships?.name || 'Hana Jumuiya'
       }));
     },
     create: async (data: Omit<EnvelopeOffering, 'id'>): Promise<EnvelopeOffering> => {
