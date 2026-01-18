@@ -140,6 +140,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
           hidden lg:flex fixed inset-y-0 left-0 z-40 bg-white shadow-xl 
           transition-all duration-300 ease-in-out flex-col border-r border-slate-200
           ${isCollapsed ? 'w-20' : 'w-72'}
+          print:hidden
         `}
       >
         {/* Brand Section */}
@@ -246,7 +247,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
 
 
       {/* --- MOBILE BOTTOM NAVIGATION --- */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white/90 backdrop-blur-xl border-t border-slate-200 pb-safe-area shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white/90 backdrop-blur-xl border-t border-slate-200 pb-safe-area shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] print:hidden">
         <div className="flex justify-around items-center h-16 px-2">
           {filteredNavItems.map((item) => {
             const Icon = item.icon;
@@ -288,7 +289,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onNavigate, search
         
         {/* Modern Sticky Header */}
         <header className="sticky top-0 z-30 px-4 lg:px-8 h-20 flex items-center justify-between
-            bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm
+            bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm print:hidden
         ">
             <div className="flex flex-col justify-center">
                 {/* Mobile: Brand Name "KanisaLetu" */}

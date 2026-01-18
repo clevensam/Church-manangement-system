@@ -193,23 +193,22 @@ const Reports: React.FC = () => {
   );
 
   const renderPrintHeader = () => (
-      <div className="hidden print:flex flex-col items-center justify-center mb-8 border-b-2 border-slate-900 pb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="bg-emerald-600 p-2 rounded-lg">
+      <div className="hidden print:flex flex-col items-center justify-center mb-10 border-b-2 border-slate-900 pb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-slate-900 p-2 rounded-lg">
                 <Banknote className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">KanisaLetu</h1>
+            <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">KanisaLetu</h1>
           </div>
-          <h2 className="text-xl font-bold uppercase text-slate-700 tracking-wider">
+          <h2 className="text-2xl font-bold uppercase text-slate-800 tracking-wider">
               {selectedReport === 'envelope' && 'Ripoti ya Sadaka za Bahasha'}
               {selectedReport === 'regular' && 'Ripoti ya Sadaka za Ibada'}
               {selectedReport === 'expense' && 'Ripoti ya Matumizi'}
           </h2>
-          <p className="text-sm text-slate-500 mt-2">
-              Imetolewa: {new Date().toLocaleDateString('sw-TZ', { dateStyle: 'full' })}
-          </p>
-          <div className="mt-2 text-xs font-mono text-slate-400">
-             Kipindi: {startDate ? new Date(startDate).toLocaleDateString() : 'Mwanzo'} - {endDate ? new Date(endDate).toLocaleDateString() : 'Sasa'}
+          <div className="flex gap-6 mt-4 text-sm font-medium text-slate-600">
+             <span>Kipindi: {startDate ? new Date(startDate).toLocaleDateString() : 'Mwanzo'} - {endDate ? new Date(endDate).toLocaleDateString() : 'Sasa'}</span>
+             <span>|</span>
+             <span>Imetolewa: {new Date().toLocaleDateString('sw-TZ', { dateStyle: 'long' })}</span>
           </div>
       </div>
   );
@@ -228,94 +227,89 @@ const Reports: React.FC = () => {
       return (
           <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               
-              {/* Summary Cards */}
-              <div className="grid grid-cols-2 gap-4 mb-6 print:mb-8">
-                  <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 print:border-slate-300 print:bg-white">
-                      <p className="text-xs uppercase text-emerald-800 font-bold mb-1 print:text-slate-600">Jumla Kuu</p>
-                      <p className="text-2xl font-mono font-bold text-emerald-600 print:text-slate-900">{calculateTotal().toLocaleString()} TZS</p>
-                  </div>
-                  <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 print:border-slate-300 print:bg-white">
-                      <p className="text-xs uppercase text-blue-800 font-bold mb-1 print:text-slate-600">Idadi ya Miamala</p>
-                      <p className="text-2xl font-mono font-bold text-blue-600 print:text-slate-900">{reportData.length}</p>
-                  </div>
+              {/* Summary Text (Text-based only) */}
+              <div className="mb-6 print:mb-8 flex flex-col gap-1">
+                   <p className="text-sm uppercase text-slate-500 font-bold tracking-wider">Jumla Kuu</p>
+                   <p className="text-3xl font-mono font-bold text-slate-900">{calculateTotal().toLocaleString()} TZS</p>
               </div>
 
               {/* Action Bar (Download) */}
-              <div className="flex justify-between items-center mb-4 print:hidden">
-                  <h3 className="font-bold text-slate-700">Orodha ya Miamala</h3>
+              <div className="flex justify-between items-center mb-6 print:hidden">
+                  <h3 className="font-bold text-slate-700">Orodha ya Miamala ({reportData.length})</h3>
                   <button onClick={handlePrint} className="flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 font-bold text-sm transition-colors">
                       <Printer className="w-4 h-4 mr-2" /> Chapisha / PDF
                   </button>
               </div>
 
               {/* Data Table */}
-              <div className="overflow-hidden rounded-xl border border-slate-200 print:border-black">
+              <div className="overflow-hidden rounded-xl border border-slate-200 print:border-black print:rounded-none">
                   <table className="w-full text-left text-sm">
-                      <thead className="bg-slate-50 text-slate-900 font-bold uppercase text-xs print:bg-slate-200">
+                      <thead className="bg-slate-50 text-slate-900 font-bold uppercase text-xs print:bg-transparent print:border-b-2 print:border-black">
                           <tr>
-                              <th className="px-4 py-3 border-b border-r border-slate-200 print:border-black">Tarehe</th>
-                              {selectedReport === 'envelope' && <th className="px-4 py-3 border-b border-r border-slate-200 print:border-black">Namba</th>}
-                              <th className="px-4 py-3 border-b border-r border-slate-200 print:border-black">Maelezo / Jina</th>
-                              {selectedReport === 'envelope' && <th className="px-4 py-3 border-b border-r border-slate-200 print:border-black">Jumuiya</th>}
-                              {selectedReport === 'envelope' && <th className="px-4 py-3 border-b border-r border-slate-200 print:border-black">Aina</th>}
-                              {selectedReport === 'regular' && <th className="px-4 py-3 border-b border-r border-slate-200 print:border-black">Aina ya Ibada</th>}
-                              <th className="px-4 py-3 border-b border-slate-200 print:border-black text-right">Kiasi (TZS)</th>
+                              <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Tarehe</th>
+                              {selectedReport === 'envelope' && <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Namba</th>}
+                              <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Maelezo / Jina</th>
+                              {selectedReport === 'envelope' && <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Jumuiya</th>}
+                              {selectedReport === 'envelope' && <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Aina</th>}
+                              {selectedReport === 'regular' && <th className="px-6 py-4 border-b border-r border-slate-200 print:border-black">Aina ya Ibada</th>}
+                              <th className="px-6 py-4 border-b border-slate-200 print:border-black text-right">Kiasi (TZS)</th>
                           </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 print:divide-slate-300">
                           {reportData.map((item, idx) => (
                               <tr key={item.id || idx} className="hover:bg-slate-50 print:hover:bg-transparent">
-                                  <td className="px-4 py-3 border-r border-slate-100 print:border-black">
+                                  <td className="px-6 py-4 border-r border-slate-100 print:border-black">
                                       {new Date(item.offering_date || item.service_date || item.expense_date).toLocaleDateString()}
                                   </td>
                                   
                                   {selectedReport === 'envelope' && (
-                                      <td className="px-4 py-3 font-mono font-bold border-r border-slate-100 print:border-black">
+                                      <td className="px-6 py-4 font-mono font-bold border-r border-slate-100 print:border-black">
                                           #{item.envelope_number}
                                       </td>
                                   )}
 
-                                  <td className="px-4 py-3 border-r border-slate-100 print:border-black">
+                                  <td className="px-6 py-4 border-r border-slate-100 print:border-black">
                                       {item.description || item.donor_name || '-'}
                                   </td>
 
                                   {selectedReport === 'envelope' && (
-                                      <td className="px-4 py-3 border-r border-slate-100 print:border-black text-xs uppercase">
+                                      <td className="px-6 py-4 border-r border-slate-100 print:border-black text-xs uppercase">
                                           {item.fellowship_name}
                                       </td>
                                   )}
                                   
                                   {selectedReport === 'envelope' && (
-                                      <td className="px-4 py-3 border-r border-slate-100 print:border-black">
-                                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase print:border print:border-black print:text-black ${item.bahasha_type === 'Jengo' ? 'bg-orange-100 text-orange-700' : 'bg-indigo-100 text-indigo-700'}`}>
+                                      <td className="px-6 py-4 border-r border-slate-100 print:border-black">
+                                          {/* Text Based - No container style */}
+                                          <span className="font-bold text-xs uppercase text-slate-700 print:text-black">
                                               {item.bahasha_type}
                                           </span>
                                       </td>
                                   )}
 
                                   {selectedReport === 'regular' && (
-                                      <td className="px-4 py-3 border-r border-slate-100 print:border-black">
+                                      <td className="px-6 py-4 border-r border-slate-100 print:border-black">
                                           {item.service_type}
                                       </td>
                                   )}
 
-                                  <td className="px-4 py-3 text-right font-mono font-medium print:border-black">
+                                  <td className="px-6 py-4 text-right font-mono font-medium print:border-black">
                                       {item.amount.toLocaleString()}
                                   </td>
                               </tr>
                           ))}
                       </tbody>
-                      <tfoot className="bg-slate-50 font-bold border-t border-slate-200 print:bg-slate-100 print:border-black">
+                      <tfoot className="bg-slate-50 font-bold border-t border-slate-200 print:bg-transparent print:border-t-2 print:border-black">
                           <tr>
-                             <td colSpan={selectedReport === 'envelope' ? 5 : 2} className="px-4 py-3 text-right uppercase text-xs text-slate-500 print:text-black border-r border-slate-200 print:border-black">Jumla Kuu</td>
-                             <td className="px-4 py-3 text-right font-mono text-slate-900 print:text-black">{calculateTotal().toLocaleString()}</td>
+                             <td colSpan={selectedReport === 'envelope' ? 5 : 2} className="px-6 py-4 text-right uppercase text-xs text-slate-500 print:text-black border-r border-slate-200 print:border-black">Jumla Kuu</td>
+                             <td className="px-6 py-4 text-right font-mono text-slate-900 print:text-black">{calculateTotal().toLocaleString()}</td>
                           </tr>
                       </tfoot>
                   </table>
               </div>
               
               {/* Print Footer */}
-              <div className="hidden print:block mt-8 text-center text-[10px] text-slate-400 border-t pt-4">
+              <div className="hidden print:block mt-12 text-center text-xs text-slate-500 border-t border-slate-300 pt-6">
                   Ripoti hii imetolewa na Mfumo wa KanisaLetu.
               </div>
           </div>
@@ -332,7 +326,7 @@ const Reports: React.FC = () => {
 
       <div id="printable-area">
           {generated && (
-              <div className="mt-8 bg-white p-8 rounded-2xl shadow-sm border border-slate-200 print:border-none print:shadow-none print:p-0">
+              <div className="mt-8 bg-white p-8 rounded-2xl shadow-sm border border-slate-200 print:border-none print:shadow-none print:p-8">
                   {renderPrintHeader()}
                   {renderTable()}
               </div>
@@ -342,19 +336,19 @@ const Reports: React.FC = () => {
       {/* CSS for Printing */}
       <style>{`
           @media print {
-              @page { size: A4; margin: 20mm; }
+              @page { size: A4; margin: 15mm; }
               body { background: white; -webkit-print-color-adjust: exact; }
-              #root > div > div > aside { display: none; } /* Hide Sidebar */
-              header { display: none; } /* Hide Top Navbar */
+              /* Force hide sticky header elements just in case Layout didn't catch it */
+              aside, nav, header { display: none !important; }
               .print\\:hidden { display: none !important; }
               .print\\:block { display: block !important; }
               .print\\:flex { display: flex !important; }
-              .print\\:bg-white { background-color: white !important; }
-              .print\\:text-black { color: black !important; }
-              .print\\:border-black { border-color: #000 !important; }
-              /* Force table borders in print */
-              table { border-collapse: collapse; width: 100%; }
-              th, td { border: 1px solid #ddd; padding: 8px; }
+              
+              /* Table Styling specific for clean print */
+              table { border-collapse: collapse; width: 100%; font-size: 11pt; }
+              th, td { border: 1px solid #000; padding: 12px; }
+              thead th { background-color: #f0f0f0 !important; color: #000 !important; font-weight: 800; }
+              tfoot td { font-weight: 800; }
           }
       `}</style>
     </div>
