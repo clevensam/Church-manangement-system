@@ -192,26 +192,84 @@ const Reports: React.FC = () => {
       </div>
   );
 
-  const renderPrintHeader = () => (
-      <div className="hidden print:flex flex-col items-center justify-center mb-10 border-b-2 border-slate-900 pb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="bg-slate-900 p-2 rounded-lg">
-                <Banknote className="w-8 h-8 text-white" />
+  const renderPrintHeader = () => {
+      // Logic to resolve names based on IDs
+      const jumuiyaName = selectedFellowship === 'all' 
+        ? 'Zote' 
+        : fellowships.find(f => f.id === selectedFellowship)?.name || 'Haijulikani';
+      
+      const bahashaType = selectedBahashaType === 'all' ? 'Zote' : selectedBahashaType;
+      const ibadaType = selectedServiceType === 'all' ? 'Zote' : selectedServiceType;
+
+      return (
+        <div className="hidden print:block mb-8 pb-4 border-b-2 border-slate-900">
+            {/* Top Row: Brand & Title */}
+            <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="bg-slate-900 p-2 rounded-lg">
+                        <Banknote className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-none">KanisaLetu</h1>
+                        <p className="text-sm text-slate-500 font-medium">Ripoti ya Fedha</p>
+                    </div>
+                </div>
+                <div className="text-right">
+                    <h2 className="text-xl font-bold uppercase text-slate-800 tracking-wider">
+                        {selectedReport === 'envelope' && 'Sadaka za Bahasha'}
+                        {selectedReport === 'regular' && 'Sadaka za Ibada'}
+                        {selectedReport === 'expense' && 'Matumizi'}
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-1">Imetolewa: {new Date().toLocaleDateString('sw-TZ', { dateStyle: 'long' })}</p>
+                </div>
             </div>
-            <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">KanisaLetu</h1>
-          </div>
-          <h2 className="text-2xl font-bold uppercase text-slate-800 tracking-wider">
-              {selectedReport === 'envelope' && 'Ripoti ya Sadaka za Bahasha'}
-              {selectedReport === 'regular' && 'Ripoti ya Sadaka za Ibada'}
-              {selectedReport === 'expense' && 'Ripoti ya Matumizi'}
-          </h2>
-          <div className="flex gap-6 mt-4 text-sm font-medium text-slate-600">
-             <span>Kipindi: {startDate ? new Date(startDate).toLocaleDateString() : 'Mwanzo'} - {endDate ? new Date(endDate).toLocaleDateString() : 'Sasa'}</span>
-             <span>|</span>
-             <span>Imetolewa: {new Date().toLocaleDateString('sw-TZ', { dateStyle: 'long' })}</span>
-          </div>
-      </div>
-  );
+
+            {/* Middle Row: Summary Metrics & Total */}
+            <div className="flex justify-between items-end bg-slate-50 border border-slate-200 rounded-lg p-6">
+                
+                {/* Dynamic Sorting Details */}
+                <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                    {/* Date always shows */}
+                    <div>
+                        <span className="block text-[10px] uppercase font-bold text-slate-500">Kipindi</span>
+                        <span className="font-semibold text-slate-900">
+                            {startDate ? new Date(startDate).toLocaleDateString() : 'Mwanzo'} — {endDate ? new Date(endDate).toLocaleDateString() : 'Sasa'}
+                        </span>
+                    </div>
+
+                    {/* Report Specific Filters */}
+                    {selectedReport === 'envelope' && (
+                        <>
+                            <div>
+                                <span className="block text-[10px] uppercase font-bold text-slate-500">Jumuiya</span>
+                                <span className="font-semibold text-slate-900">{jumuiyaName}</span>
+                            </div>
+                            <div className="mt-2">
+                                <span className="block text-[10px] uppercase font-bold text-slate-500">Aina ya Bahasha</span>
+                                <span className="font-semibold text-slate-900">{bahashaType}</span>
+                            </div>
+                        </>
+                    )}
+
+                    {selectedReport === 'regular' && (
+                        <div>
+                            <span className="block text-[10px] uppercase font-bold text-slate-500">Aina ya Ibada</span>
+                            <span className="font-semibold text-slate-900">{ibadaType}</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Big Total at Header */}
+                <div className="text-right pl-8 border-l border-slate-200">
+                    <span className="block text-xs uppercase text-slate-500 font-extrabold tracking-wider mb-1">Jumla Kuu</span>
+                    <span className="block text-3xl font-mono font-bold text-slate-900 leading-none">
+                        {calculateTotal().toLocaleString()} <span className="text-sm font-sans font-medium text-slate-400">TZS</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+      );
+  };
 
   const renderTable = () => {
       if (!generated) return null;
@@ -227,7 +285,7 @@ const Reports: React.FC = () => {
       return (
           <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               
-              {/* Summary Text (Text-based only) - Removed here, moved to bottom for print */}
+              {/* Summary Text (Text-based only) - Hidden in Print (now in header) but visible on Screen */}
               <div className="mb-6 print:hidden flex flex-col gap-1">
                    <p className="text-sm uppercase text-slate-500 font-bold tracking-wider">Jumla Kuu</p>
                    <p className="text-3xl font-mono font-bold text-slate-900">{calculateTotal().toLocaleString()} TZS</p>
@@ -304,7 +362,7 @@ const Reports: React.FC = () => {
                   </table>
               </div>
 
-              {/* Total Summary (Outside Table for Last Page Print) */}
+              {/* Total Summary (Outside Table for Last Page Print - Bottom) */}
               <div className="flex justify-end mt-0 border-t border-slate-200 print:border-black">
                  <div className="flex items-center gap-8 px-6 py-6 border-l border-r border-b border-slate-200 bg-slate-50 print:bg-transparent print:border-black print:border-t-2 rounded-b-xl print:rounded-none">
                      <span className="uppercase text-xs text-slate-500 print:text-black font-extrabold tracking-wider">Jumla Kuu</span>
